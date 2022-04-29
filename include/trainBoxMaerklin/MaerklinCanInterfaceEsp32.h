@@ -21,7 +21,7 @@
 #include "trainBoxMaerklin/MaerklinCanInterface.h"
 #include "trainBoxMaerklin/CanInterface.h"
 #include "Helper/Observer.h"
-#include <driver/can.h>
+#include <driver/twai.h>
 
 //#define CAN_DEBUG
 
@@ -75,7 +75,7 @@ class MaerklinCanInterfaceEsp32 : public MaerklinCanInterface, public Observer
      */
     bool receiveMessage(TrackMessage &message) override;
 
-    virtual void notifyCanReceived(can_message_t frame){};
+    virtual void notifyCanReceived(twai_message_t frame){};
 
     void cyclic();
 

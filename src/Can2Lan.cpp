@@ -72,9 +72,9 @@ void Can2Lan::begin(std::shared_ptr<CanInterface> canInterface, bool debug, bool
     }
     m_canInterface->attach(*this);
     // send magic start frame
-    can_message_t frame;
+    twai_message_t frame;
     frame.identifier = 0x360301UL;
-    frame.flags = CAN_MSG_FLAG_EXTD | CAN_MSG_FLAG_SS;
+    frame.flags = TWAI_MSG_FLAG_EXTD | TWAI_MSG_FLAG_SS;
     frame.data_length_code = 5;
     for (int i = 0; i < frame.data_length_code; i++)
     {
@@ -95,7 +95,7 @@ void Can2Lan::update(Observable &observable, void *data)
     {
         if (nullptr != data)
         {
-            can_message_t *frame = static_cast<can_message_t *>(data);
+            twai_message_t *frame = static_cast<twai_message_t *>(data);
 
             uint8_t udpframe[16];
             memset(udpframe, 0, m_canFrameSize);
@@ -147,7 +147,7 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
     if (0 == (size % m_canFrameSize))
     {
         uint8_t numberOfMessages = size / m_canFrameSize;
-        can_message_t tx_frame;
+        twai_message_t tx_frame;
         uint8_t *udpFramePtr = udpFrame;
         for (uint8_t index = 0; index < numberOfMessages; 
             udpFramePtr = (udpFrame + (index * m_canFrameSize)), index++)
@@ -155,7 +155,7 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
             uint32_t canid = 0;
             memcpy(&canid, &udpFramePtr[0], 4);
             tx_frame.identifier = ntohl(canid);
-            tx_frame.flags = CAN_MSG_FLAG_EXTD | CAN_MSG_FLAG_SS;
+            tx_frame.flags = TWAI_MSG_FLAG_EXTD | TWAI_MSG_FLAG_SS;
             tx_frame.data_length_code = udpFramePtr[4];
             memcpy(&tx_frame.data, &udpFramePtr[5], 8);
 
@@ -267,7 +267,7 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
         if (0 == (size % interface->m_canFrameSize))
         {
             uint8_t numberOfMessages = size / interface->m_canFrameSize;
-            can_message_t tx_frame;
+            twai_message_t tx_frame;
             uint8_t *tcpFramePtr = tcpFrame;
             for (uint8_t index = 0; index < numberOfMessages; index++)
             {
@@ -276,7 +276,7 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
                 memcpy(&canid, &tcpFramePtr[0], 4);
                 /* TWAI is stored in network Big Endian format */
                 tx_frame.identifier = ntohl(canid);
-                tx_frame.flags = CAN_MSG_FLAG_EXTD | CAN_MSG_FLAG_SS;
+                tx_frame.flags = TWAI_MSG_FLAG_EXTD | TWAI_MSG_FLAG_SS;
                 tx_frame.data_length_code = tcpFramePtr[4];
                 memcpy(&tx_frame.data, &tcpFramePtr[5], 8);
 

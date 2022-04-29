@@ -49,7 +49,7 @@ void MaerklinCanInterfaceEsp32::update(Observable &observable, void *data)
   {
     if (nullptr != data)
     {
-      can_message_t *frame = static_cast<can_message_t *>(data);
+      twai_message_t *frame = static_cast<twai_message_t *>(data);
 
       TrackMessage message;
       message.clear();
@@ -77,12 +77,12 @@ void MaerklinCanInterfaceEsp32::update(Observable &observable, void *data)
 
 bool MaerklinCanInterfaceEsp32::sendMessage(TrackMessage &message)
 {
-  can_message_t tx_frame;
+  twai_message_t tx_frame;
 
   message.hash = m_hash;
 
   tx_frame.identifier = (static_cast<uint32_t>(message.prio) << 25) | (static_cast<uint32_t>(message.command) << 17) | (uint32_t)message.hash;
-  tx_frame.flags = CAN_MSG_FLAG_EXTD | CAN_MSG_FLAG_SS;
+  tx_frame.flags = TWAI_MSG_FLAG_EXTD | TWAI_MSG_FLAG_SS;
   tx_frame.data_length_code = message.length;
 
   for (int i = 0; i < message.length; i++)
@@ -110,7 +110,7 @@ bool MaerklinCanInterfaceEsp32::sendMessage(TrackMessage &message)
 
 bool MaerklinCanInterfaceEsp32::receiveMessage(TrackMessage &message)
 {
-  can_message_t rx_frame;
+  twai_message_t rx_frame;
 
   bool result{false};
 

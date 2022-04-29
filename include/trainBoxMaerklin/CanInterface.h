@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Helper/Observer.h"
-#include <driver/can.h>
+#include <driver/twai.h>
 
 
 class CanInterface : public Observable
@@ -30,9 +30,9 @@ public:
 
     void cyclic();
 
-    bool transmit(can_message_t& frame, uint16_t timeoutINms);
+    bool transmit(twai_message_t& frame, uint16_t timeoutINms);
 
-    bool receive(can_message_t& frame, uint16_t timeoutINms);
+    bool receive(twai_message_t& frame, uint16_t timeoutINms);
 
 private:
     void errorHandling();
