@@ -34,7 +34,7 @@ std::shared_ptr<CanInterface> canInterface = std::make_shared<CanInterface>();
 
 const uint16_t hash{0};
 const uint32_t serialNumber{0xFFFFFFF0};
-const uint16_t swVersion{0x0140};
+const uint16_t swVersion{0x0142};
 const int16_t z21Port{21105};
 z60 centralStation(hash, serialNumber, z21Interface::HwType::Z21_XL, swVersion, z21Port, true, false, false);
 

@@ -88,8 +88,9 @@ void z60::begin()
     }
   }
 
-  z21InterfaceEsp32::setPower(EnergyState::csTrackVoltageOff);
-  MaerklinCanInterfaceEsp32::sendSystemStop();
+  // Disable track voltage
+  // z21InterfaceEsp32::setPower(EnergyState::csTrackVoltageOff);
+  // MaerklinCanInterfaceEsp32::sendSystemStop();
 
   if (m_trainboxIdList.size() > 0)
   {
