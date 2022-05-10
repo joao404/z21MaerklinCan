@@ -28,8 +28,6 @@
 
 #include <SPIFFS.h>
 
-#define defaultPassword "12345678" // Default Z60 network password
-
 std::shared_ptr<CanInterface> canInterface = std::make_shared<CanInterface>();
 
 const uint16_t hash{0};
@@ -54,10 +52,12 @@ void setup()
 
   AutoConnectConfig configAutoConnect;
 
+  String idOfEsp = String((uint32_t)(ESP.getEfuseMac() >> 32), HEX);
+
   configAutoConnect.ota = AC_OTA_BUILTIN;
-  configAutoConnect.apid = "z60AP-" + String((uint32_t)(ESP.getEfuseMac() >> 32), HEX);
-  configAutoConnect.psk = defaultPassword;
-  configAutoConnect.apip = IPAddress(192, 168, 4, 1); // Sets SoftAP IP address
+  configAutoConnect.apid = "z60AP-" + idOfEsp;
+  configAutoConnect.psk = idOfEsp + idOfEsp;
+  configAutoConnect.apip = IPAddress(192, 168, 0, 111); // Sets SoftAP IP address
   configAutoConnect.netmask = IPAddress(255, 255, 255, 0);
   configAutoConnect.channel = random(1,12);
   Serial.printf("Wifi Channel:%d\n", configAutoConnect.channel);
