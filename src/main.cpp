@@ -53,6 +53,12 @@ void setup()
   AutoConnectConfig configAutoConnect;
 
   String idOfEsp = String((uint32_t)(ESP.getEfuseMac() >> 32), HEX);
+  while(idOfEsp.length() < 4)
+  {
+    idOfEsp += "0";
+  }
+  Serial.printf("ID of chip: ");
+  Serial.println(idOfEsp);
 
   configAutoConnect.ota = AC_OTA_BUILTIN;
   configAutoConnect.apid = "z60AP-" + idOfEsp;

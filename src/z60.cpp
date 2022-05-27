@@ -507,7 +507,7 @@ bool z60::onLocoFunc(uint32_t id, uint8_t function, uint8_t value)
   if (m_debug)
   {
     Serial.print("Id:");
-    Serial.print(id);
+    Serial.print(id, HEX);
     Serial.print(" onLocoFunc:");
     Serial.print(function);
     Serial.print(" value:");

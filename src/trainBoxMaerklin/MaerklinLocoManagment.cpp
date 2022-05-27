@@ -102,7 +102,7 @@ bool MaerklinLocoManagment::Ms2LocoToCs2Loco(std::string& locoName, std::string 
                 functionNumber++;
                 index += strLenFkt;
             }
-            else if(ms2Data->find(".name=", index) == index)
+            else if((ms2Data->find(".name=", index) == index) && (ms2Data->at(index-1) != '.'))
             {
 				while(ms2Data->at(index) != '\n')
 				{
