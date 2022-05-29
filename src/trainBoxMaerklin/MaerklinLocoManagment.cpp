@@ -89,6 +89,10 @@ bool MaerklinLocoManagment::Ms2LocoToCs2Loco(std::string &locoName, std::string 
                 *cs2Data += "\n";
                 break;
             }
+            else if ('\r' == character)
+            {
+                continue;
+            }
             else if ('\n' == character)
             {
                 newLine = true;
