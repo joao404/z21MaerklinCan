@@ -15,7 +15,7 @@ public:
 
     void cyclic();
 
-    void begin(AutoConnectConfig& autoConnectConfig, void (*m_deleteLocoConfigFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void));
+    void begin(AutoConnectConfig& autoConnectConfig, void (*deleteLocoConfigFkt)(void), void (*defaultLocoListFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void));
 
     void setLokomotiveAvailable(bool isAvailable);
     void setTransmissionFinished(bool hasFinished);
@@ -29,6 +29,7 @@ private:
     String getContentType(const String &filename);
 
     void (*m_deleteLocoConfigFkt)(void);
+    void (*m_defaultLocoListFkt)(void);
     void (*m_programmingFkt)(bool);
     void (*m_readingFkt)(void);
 
@@ -41,6 +42,7 @@ private:
     AutoConnect m_AutoConnect;
     AutoConnectAux m_auxZ60Config;
     AutoConnectCheckbox m_deleteLocoConfig;
+    AutoConnectCheckbox m_defaultLocoCs2;
     AutoConnectCheckbox m_progActive;
     AutoConnectCheckbox m_readingLoco;
     AutoConnectSubmit m_saveButton;  

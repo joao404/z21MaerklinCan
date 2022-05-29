@@ -6,9 +6,10 @@ WebService::WebService()
     : m_AutoConnect(m_WebServer),
       m_auxZ60Config("/", "Z60 Config"),
       m_deleteLocoConfig("deleteLocoConfig", "deleteLocoConfig", "Delete internal memory for z21 loco config", false),
+      m_defaultLocoCs2("defaultLocoCs2", "defaultLocoCs2", "Set lokomotive.cs2 back to default values", false),
       m_progActive("progActive", "progActive", "Trackprogramming activ", false),
       m_readingLoco("readingLoco", "readingLoco", "Read locos from Mobile Station", false),
-      m_saveButton("saveButton", "Save", "/z60configstatus"),
+      m_saveButton("saveButton", "Run", "/z60configstatus"),
       m_auxZ60ConfigStatus("/z60configstatus", "Z60 Config Status"),
       m_readingStatus("readingStatus", "readingStatus", "Reading locos: %s"),
       m_locoNames("locoNames", "locoNames", "%s"),
@@ -107,11 +108,13 @@ void WebService::cyclic()
     m_AutoConnect.handleClient();
 }
 
-void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoConfigFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void))
+void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoConfigFkt)(void), void (*defaultLocoListFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void))
 {
     m_programmingFkt = programmingFkt;
 
     m_readingFkt = readingFkt;
+
+    m_defaultLocoListFkt = defaultLocoListFkt;
 
     m_deleteLocoConfigFkt = deleteLocoConfigFkt;
 
@@ -123,6 +126,11 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
                                     {
                                         Serial.println("deleting z21 loco config");
                                         m_deleteLocoConfigFkt();
+                                    }
+                                    if (m_WebServer.hasArg("defaultLocoCs2"))
+                                    {
+                                        Serial.println("default loco list");
+                                        m_defaultLocoListFkt();
                                     }
                                     if (m_WebServer.hasArg("progActive"))
                                     {
@@ -169,7 +177,7 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
 
     m_AutoConnect.onNotFound(WebService::handleNotFound);
 
-    m_auxZ60Config.add({m_deleteLocoConfig, m_progActive, m_readingLoco, m_saveButton});
+    m_auxZ60Config.add({m_deleteLocoConfig, m_defaultLocoCs2, m_progActive, m_readingLoco, m_saveButton});
     m_auxZ60ConfigStatus.add({m_readingStatus, m_locoNames, m_reloadButton});
 
     m_AutoConnect.join(m_auxZ60Config);

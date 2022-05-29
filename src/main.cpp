@@ -53,7 +53,7 @@ void setup()
   AutoConnectConfig configAutoConnect;
 
   String idOfEsp = String((uint32_t)(ESP.getEfuseMac() >> 32), HEX);
-  while(idOfEsp.length() < 4)
+  while (idOfEsp.length() < 4)
   {
     idOfEsp += "0";
   }
@@ -65,7 +65,7 @@ void setup()
   configAutoConnect.psk = idOfEsp + idOfEsp;
   configAutoConnect.apip = IPAddress(192, 168, 0, 111); // Sets SoftAP IP address
   configAutoConnect.netmask = IPAddress(255, 255, 255, 0);
-  configAutoConnect.channel = random(1,12);
+  configAutoConnect.channel = random(1, 12);
   Serial.printf("Wifi Channel:%d\n", configAutoConnect.channel);
   configAutoConnect.title = "z60";
   configAutoConnect.beginTimeout = 15000;
@@ -90,6 +90,127 @@ void setup()
     auto deleteLocoConfigFkt = []()
     {
       centralStation.deleteLocoConfig();
+    };
+
+    auto defaultLocoListFkt = []()
+    {
+      WebService::getInstance()->setTransmissionFinished(false);
+      WebService::getInstance()->setLokomotiveAvailable(false);
+      lokomotiveCs2 = SPIFFS.open("/config/lokomotive.cs2", FILE_WRITE);
+      if (!lokomotiveCs2)
+      {
+        Serial.println("ERROR failed to open lokomotive.cs2 for writing");
+        WebService::getInstance()->setLokomotiveAvailable(false);
+      }
+      else
+      {
+        lokomotiveCs2.print(
+            "[lokomotive]\n"
+            "version\n"
+            " .minor=3\n"
+            "session\n"
+            " .id=1\n"
+            "lokomotive\n"
+            " .name=BR 86\n"
+            " .icon=loco\n"
+            " .dv=1\n"
+            " .uid=0x35\n"
+            " .adresse=0x35\n"
+            " .typ=mm2_prg\n"
+            " .mfxuid=0x0\n"
+            " .symbol=2\n"
+            " .av=6\n"
+            " .bv=3\n"
+            " .volume=25\n"
+            " .velocity=0\n"
+            " .richtung=-1\n"
+            " .vmax=60\n"
+            " .vmin=3\n"
+            " .funktionen\n"
+            " ..nr=0\n"
+            " ..typ=1\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=1\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=2\n"
+            " ..typ=9\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=3\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=4\n"
+            " ..typ=8\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=5\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=6\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=7\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=8\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=9\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=10\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=11\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=12\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=13\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=14\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            " .funktionen\n"
+            " ..nr=15\n"
+            " ..typ=0\n"
+            " ..dauer=0\n"
+            " ..wert=0\n"
+            "");
+        lokomotiveCs2.close();
+        WebService::getInstance()->setLokomotiveAvailable(true);
+      }
+      WebService::getInstance()->setTransmissionFinished(true);
     };
 
     auto programmingFkt = [](bool result)
@@ -127,7 +248,7 @@ void setup()
       }
     };
 
-    webService->begin(configAutoConnect, deleteLocoConfigFkt, programmingFkt, readingFkt);
+    webService->begin(configAutoConnect, deleteLocoConfigFkt, defaultLocoListFkt, programmingFkt, readingFkt);
   }
 
   if (nullptr != canInterface.get())

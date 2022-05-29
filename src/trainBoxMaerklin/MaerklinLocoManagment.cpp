@@ -55,7 +55,7 @@ bool MaerklinLocoManagment::startConfigDataRequest(DataType type, std::string *i
     return false;
 }
 
-bool MaerklinLocoManagment::Ms2LocoToCs2Loco(std::string& locoName, std::string *ms2Data, std::string *cs2Data)
+bool MaerklinLocoManagment::Ms2LocoToCs2Loco(std::string &locoName, std::string *ms2Data, std::string *cs2Data)
 {
     if ((nullptr == ms2Data) || (nullptr == cs2Data))
     {
@@ -63,66 +63,96 @@ bool MaerklinLocoManagment::Ms2LocoToCs2Loco(std::string& locoName, std::string 
     }
     uint8_t functionNumber = 0;
     size_t strLenFkt = strlen(".fkt\n") - 2;
-    *cs2Data = "lokomotive\n .name=" + locoName + "\n .icon=loco\n ";
-    size_t indexEndOfFile = ms2Data->find_last_of('\n');
-    bool newLine = true;
-    for (size_t index = (ms2Data->find("lok\n") + 4); index < ms2Data->size(); index++)
+    size_t index = ms2Data->find("lok\n");
+    *cs2Data = "";
+    if (std::string::npos != index)
     {
-        char character = ms2Data->at(index);
-        if (' ' == character)
+        *cs2Data = "lokomotive\n .name=" + locoName + "\n .icon=loco\n ";
+        size_t indexEndOfFile = ms2Data->find_last_of('\n');
+        bool newLine = true;
+        for (index += 4; index < ms2Data->size(); index++)
         {
-            if (newLine)
+            char character = ms2Data->at(index);
+            if (' ' == character)
             {
-                continue;
+                if (newLine)
+                {
+                    continue;
+                }
+                else
+                {
+                    *cs2Data += character;
+                }
+            }
+            else if (indexEndOfFile == index)
+            {
+                *cs2Data += "\n";
+                break;
+            }
+            else if ('\n' == character)
+            {
+                newLine = true;
+                *cs2Data += "\n ";
+            }
+            else if ('.' == character)
+            {
+                newLine = false;
+                if (ms2Data->find(".fkt\n", index) == index)
+                {
+                    *cs2Data += ".funktionen\n ..nr=";
+                    char intBuffer[4];
+                    sprintf(intBuffer, "%u", functionNumber);
+                    *cs2Data += intBuffer;
+                    functionNumber++;
+                    index += strLenFkt;
+                }
+                else if (ms2Data->find(".fkt2\n", index) == index)
+                {
+                    *cs2Data += ".funktionen_2\n ..nr=";
+                    char intBuffer[4];
+                    sprintf(intBuffer, "%u", functionNumber);
+                    *cs2Data += intBuffer;
+                    functionNumber++;
+                    index += (strLenFkt+1);
+                }
+                else if (ms2Data->find(".typ2", index) == index)
+                {
+                    *cs2Data += ".typ";
+                    index += 4;
+                }
+                else if (ms2Data->find(".dauer2", index) == index)
+                {
+                    *cs2Data += ".dauer";
+                    index += 6;
+                }
+                else if (ms2Data->find(".wert2", index) == index)
+                {
+                    *cs2Data += ".wert";
+                    index += 5;
+                }
+                else if ((ms2Data->find(".name=", index) == index) && (ms2Data->at(index - 1) != '.'))
+                {
+                    while (ms2Data->at(index) != '\n')
+                    {
+                        index++;
+                    }
+                    index++;
+                    newLine = true;
+                }
+                else
+                {
+                    *cs2Data += character;
+                }
             }
             else
             {
+                newLine = false;
                 *cs2Data += character;
             }
         }
-        else if (indexEndOfFile == index)
-        {
-            *cs2Data += "\n";
-            break;
-        }
-        else if ('\n' == character)
-        {
-            newLine = true;
-            *cs2Data += "\n ";
-        }
-        else if ('.' == character)
-        {
-            newLine = false;
-            if (ms2Data->find(".fkt\n", index) == index)
-            {
-                *cs2Data += ".funktionen\n ..nr=";
-                char intBuffer[4];
-                sprintf(intBuffer, "%u", functionNumber);
-                *cs2Data += intBuffer;
-                functionNumber++;
-                index += strLenFkt;
-            }
-            else if((ms2Data->find(".name=", index) == index) && (ms2Data->at(index-1) != '.'))
-            {
-				while(ms2Data->at(index) != '\n')
-				{
-					index++;
-				}
-				index++;
-				newLine = true;
-			}
-            else
-            {
-                *cs2Data += character;
-            }
-        }
-        else
-        {
-            newLine = false;
-            *cs2Data += character;
-        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, uint16_t hash, bool success)
@@ -210,6 +240,7 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                     {
                         // transform loco string into new string
                         std::string cs2LocoString;
+                        //Serial.print(data->c_str());
                         Ms2LocoToCs2Loco(m_locoList.at(m_currentLocoNum), data, &cs2LocoString);
                         m_writeFileCallback(&cs2LocoString);
                     }
