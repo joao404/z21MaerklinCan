@@ -31,6 +31,14 @@
 class Can2Lan : public Observer
 {
 public:
+struct DataLoco
+{
+    
+    uint32_t adrTrainbox;
+    unsigned long lastSpeedCmdTimeINms;
+};
+
+public:
     static Can2Lan* getCan2Lan();
     virtual ~Can2Lan();
     void begin(std::shared_ptr<CanInterface> canInterface, bool debug, bool canDebug, int localPortUdp = 15731, int localPortTcp = 15731, int destinationPortUdp = 15730);
@@ -61,6 +69,10 @@ private:
     int m_localPortUdp;
     int m_localPortTcp;
     int m_destinationPortUdp;
+
+    std::vector<DataLoco> m_dataLocos;
+
+    const unsigned long m_minimumCmdIntervalINms;
 
     AsyncUDP m_udpInterface;
     std::unique_ptr<AsyncServer> m_tcpInterface;
