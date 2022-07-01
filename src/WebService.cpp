@@ -182,6 +182,7 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
 
     m_AutoConnect.join(m_auxZ60Config);
     m_AutoConnect.join(m_auxZ60ConfigStatus);
+    //m_AutoConnect.append("/z21.html", "z21DB");
 
     m_AutoConnect.begin();
 }

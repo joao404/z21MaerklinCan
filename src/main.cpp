@@ -25,8 +25,10 @@
 #include "trainBoxMaerklin/MaerklinLocoManagment.h"
 #include "z60.h"
 #include "Can2Lan.h"
+#include "Cs2DataParser.h"
 
 #include <SPIFFS.h>
+#include <sqlite3.h>
 
 std::shared_ptr<CanInterface> canInterface = std::make_shared<CanInterface>();
 
@@ -42,13 +44,24 @@ MaerklinLocoManagment locoManagment(0x0, centralStation, centralStation.getStati
 
 File lokomotiveCs2;
 
+const char *data = "Callback function called";
+char *zErrMsg{0};
+uint16_t locoId{1};
+uint16_t functionId{1};
+sqlite3 *z21Database;
+
 /**********************************************************************************/
 void setup()
 {
   Serial.begin(230000);
 
   // Start the filesystem
-  SPIFFS.begin(false);
+  if (!SPIFFS.begin(false))
+  {
+    Serial.println("Failed to mount file system");
+    while (1)
+      ;
+  }
 
   AutoConnectConfig configAutoConnect;
 
@@ -84,6 +97,8 @@ void setup()
   configAutoConnect.retainPortal = true;
 
   WebService *webService = WebService::getInstance();
+
+  sqlite3_initialize();
 
   if (nullptr != webService)
   {
@@ -223,13 +238,78 @@ void setup()
         if (nullptr != data)
         { /*Serial.println(data->c_str());*/
           lokomotiveCs2.print(data->c_str());
+          // get locoinfo from data. Every file is only one loco
+          // write loco data and functions to sqlite
+          // String sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(1,2,0,'','0',0,'light',0,1,0)";
+
+          // returns if no loco data is present (lokomotive)
+          Cs2DataParser::LocoData locoData;
+          if (Cs2DataParser::parseCs2ToLocoData(data, locoData))
+          {
+            auto callback = [](void *data, int argc, char **argv, char **azColName) -> int
+            {
+              for (int i = 1; i < argc; i++)
+              {
+                Serial.printf("%s|", argv[i]);
+              }
+              Serial.printf("\n");
+              return 0;
+            };
+
+            std::string sql = "insert into vehicles(id,name,image_name,type,max_speed,address) values(1,'" + locoData.name + "','" + locoData.name + ".png'," + "0,120," + std::to_string(locoData.adress) + ")";
+
+            if (sqlite3_exec(z21Database, sql.c_str(), callback, (void *)data, &zErrMsg) != SQLITE_OK)
+            {
+              Serial.printf("SQL error: %s\n", zErrMsg);
+              sqlite3_free(zErrMsg);
+            }
+
+            for (auto iterator = locoData.functionData.begin(); iterator != locoData.functionData.end(); ++iterator)
+            {
+              sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(" + std::to_string(functionId) + "," + std::to_string(locoId) + ",0,'','0',0,'"+ iterator->name  +"',"+ std::to_string(iterator->function) + ",1,0)";
+              if (sqlite3_exec(z21Database, sql.c_str(), callback, (void *)data, &zErrMsg) != SQLITE_OK)
+              {
+                Serial.printf("SQL error: %s\n", zErrMsg);
+                sqlite3_free(zErrMsg);
+              }
+              functionId++;
+            }
+            locoId++;
+          }
         }
       };
 
       auto lambdaWriteFileResult = [](bool success)
       {
         Serial.println(success ? "Getting locos success" : "Getting locos failed");
+        if (success)
+        {
+          auto callback = [](void *data, int argc, char **argv, char **azColName) -> int
+          {
+            for (int i = 1; i < argc; i++)
+            {
+              Serial.printf("%s|", argv[i]);
+            }
+            Serial.printf("\n");
+            return 0;
+          };
+          if (sqlite3_exec(z21Database, "Select * from vehicles", callback, (void *)data, &zErrMsg) != SQLITE_OK)
+          {
+            Serial.printf("SQL error: %s\n", zErrMsg);
+            sqlite3_free(zErrMsg);
+          }
+
+          if (sqlite3_exec(z21Database, "Select * from functions", callback, (void *)data, &zErrMsg) != SQLITE_OK)
+          {
+            Serial.printf("SQL error: %s\n", zErrMsg);
+            sqlite3_free(zErrMsg);
+          }
+        }
+
         lokomotiveCs2.close();
+        // close database
+        sqlite3_close(z21Database);
+
         WebService::getInstance()->setLocoList(locoManagment.getLocoList());
         WebService::getInstance()->setLokomotiveAvailable(success);
         WebService::getInstance()->setTransmissionFinished(true);
@@ -237,6 +317,39 @@ void setup()
 
       WebService::getInstance()->setTransmissionFinished(false);
       WebService::getInstance()->setLokomotiveAvailable(false);
+      // open sql database and delete current entries
+      sqlite3_initialize();
+
+      int sqliteResult = sqlite3_open("/spiffs/config/Loco.sqlite", &z21Database);
+      if (0 != sqliteResult)
+      {
+        Serial.printf("Can't open database: %s\n", sqlite3_errmsg(z21Database));
+      }
+      else
+      {
+        Serial.printf("Opened database successfully\n");
+
+        auto callback = [](void *data, int argc, char **argv, char **azColName) -> int
+        {
+          for (int i = 1; i < argc; i++)
+          {
+            Serial.printf("%s|", argv[i]);
+          }
+          Serial.printf("\n");
+          return 0;
+        };
+
+        if (sqlite3_exec(z21Database, "delete from vehicles", callback, (void *)data, &zErrMsg) != SQLITE_OK)
+        {
+          Serial.printf("SQL error: %s\n", zErrMsg);
+          sqlite3_free(zErrMsg);
+        }
+        if (sqlite3_exec(z21Database, "delete from functions", callback, (void *)data, &zErrMsg) != SQLITE_OK)
+        {
+          Serial.printf("SQL error: %s\n", zErrMsg);
+          sqlite3_free(zErrMsg);
+        }
+      }
       lokomotiveCs2 = SPIFFS.open("/config/lokomotive.cs2", FILE_WRITE);
       if (!lokomotiveCs2)
       {
@@ -244,6 +357,13 @@ void setup()
       }
       else
       {
+        Serial.println("Openend lokomotive.cs2");
+      }
+
+      if (lokomotiveCs2 && (0 == sqliteResult))
+      {
+        locoId = 1;
+        functionId = 1;
         locoManagment.getLokomotiveConfig(lambdaWriteFile, lambdaWriteFileResult);
       }
     };

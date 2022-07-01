@@ -12,7 +12,6 @@ Programming of locos through z21 app is deactivated by default and can be activa
 
 Known problems:
 - z21 loco programming is not tested
-- Reading of configuration from additional MS2 with software version higher then 3.0 reads only locos
 - z21 app does not get stop or go command from MS. Reason unknown
 
 ToDo:
@@ -35,7 +34,7 @@ Note:
 - Start RemoteCS2/3 or z21 App. Connect to server under ip 192.168.0.111
 
 ## Loading locos from MS2
-- Go to webserver under 192.168.4.1
+- Go to webserver under 192.168.0.111
 - Go to Home
 - mark checkbox for "Read locos from Mobile Station"
 - Click on Submit
