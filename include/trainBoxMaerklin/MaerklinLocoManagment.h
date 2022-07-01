@@ -20,7 +20,6 @@
 #include <string>
 #include <memory>
 #include "trainBoxMaerklin/MaerklinConfigDataStream.h"
-#include "miniz.h"
 
 // ToDo:
 // handle different files that are received. Currently only locoInfo is used
