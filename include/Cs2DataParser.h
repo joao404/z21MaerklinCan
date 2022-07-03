@@ -27,6 +27,8 @@ public:
 	{
 		std::string name;
 		uint16_t function;
+		std::string buttonType;
+		uint16_t time;
 	};
 
 	struct LocoData

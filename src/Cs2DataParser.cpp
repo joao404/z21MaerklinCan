@@ -16,21 +16,171 @@
 
 #include "Cs2DataParser.h"
 
+static const char *locoFunctionString[] = {
+    " ",
+    "Stirnbeleuchtung",
+    "Innenbeleuchtung",
+    "Rücklicht",
+    "Fernlicht",
+    "Geräusch",
+    "Pantograf",
+    "Rauch",
+    "Rangiergang",
+    "Telexkupplung beidseitig",
+    "Horn",
+    "Schaffnerpfiff",
+    "Pfeife",
+    "Glocke",
+    "Links/Rechts",
+    "Heben/Senken",
+    "Drehen links",
+    "Kranarm heben/senken",
+    "ABV",
+    "Pumpe",
+    "Bremsenquietschen",
+    "Schaltstufen",
+    "Generator",
+    "Betriebsgeräusch",
+    "Motor",
+    "Bahnhofsansage",
+    "Kohle schaufeln",
+    "Türen schließen",
+    "Türe öffnen",
+    "Lüftergeräusch",
+    "Lüfter",
+    "Feuerbüchse",
+    "Innenbeleuchtung",
+    "Tischlampe Ep. IV",
+    "Tischlampe Ep.III",
+    "Tischlampe Ep. II",
+    "Schüttelrost",
+    "Schienenstoß",
+    "Nummernschild",
+    "Betriebsgeräusch",
+    "Zuglaufschild",
+    "Führerstand hinten",
+    "Führerstand vorn",
+    "Kuppeln",
+    "Pufferstoß",
+    "Zugansage",
+    "Kranhaken",
+    "Blinklicht",
+    "Führerstandsbel.",
+    "Pressluft",
+    "F0",
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7",
+    "F8",
+    "F9",
+    "F10",
+    "F11",
+    "F12",
+    "F13",
+    "F14",
+    "F15",
+    "F16",
+    "F17",
+    "F18",
+    "F19",
+    "F20",
+    "F21",
+    "F22",
+    "F23",
+    "F24",
+    "F25",
+    "F26",
+    "F27",
+    "F28",
+    "F29",
+    "F30",
+    "F31",
+    "Telexkupplung hinten",
+    "Telexkupplung vorne",
+    "Pantograf hinten",
+    "Pantograf vorne",
+    "Licht hinten",
+    "Licht vorne",
+    "Heben",
+    "Lüfter",
+    "Triebwerksbeleuchtung",
+    "Zylinder ausblasen",
+    "Dampfstoß",
+    "Kran",
+    "Auf",
+    "Ab",
+    "Links",
+    "Rechts",
+    "Drehen rechts",
+    "Magnet"
+};
+
 bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData& locoData)
 {
     bool result{false};
-    Serial.println("check string");
-    Serial.println(data->c_str());
+    // Serial.println("check string");
+    // Serial.println(data->c_str());
     auto n = data->find("lokomotive\n");
     // text starts at beginning
     if(0 == n)
     {
         std::string::size_type pos = getParameter(data, ".name=", locoData.name);
         pos = getParameter(data, ".adresse=", locoData.adress, pos);
-        //sscanf(data->c_str(), ".name=%s\n", locoData.name);
-        // adress should by adapted by .typ=
-        //sscanf(data->c_str(), ".adresse=%d\n", locoData.adress);
-        locoData.functionData.emplace_back(FunctionData{"light", 2});
+        std::string adressType;
+        getParameter(data, ".typ=", adressType);
+        if("mm" == adressType || "mm2_prg" == adressType || "mmm2_lok" == adressType)
+        {
+            locoData.adress += 2000;
+        }
+        else if("dcc")
+        {
+            locoData.adress += 8000;
+        }
+        else if("mfx")
+        {
+            locoData.adress += 4000;
+        }
+        // pos = 0;
+        // while(std::string::npos != (pos = data->find(".funktionen\n", pos)))
+        // {
+        //     uint16_t fktNum = 0;
+        //     if(std::string::npos == getParameter(data, "..nr=", fktNum, pos))
+        //     {
+        //         continue;
+        //     }
+        //     uint16_t fktType = 0;
+        //     if(std::string::npos == getParameter(data, "..typ=", fktType, pos))
+        //     {
+        //         continue;
+        //     }
+        //     uint16_t fktTime = 0;
+        //     getParameter(data, "..dauer=", fktTime, pos);
+        //     // uint16_t fktValue = 0;
+        //     // getParameter(data, "..wert=", fktValue, pos);
+        //     locoData.functionData.emplace_back(FunctionData{locoFunctionString[fktType], fktNum, "", fktTime});
+        // } 
+        // while(std::string::npos != (pos = data->find(".funktionen_2\n", pos)))
+        // {
+        //     uint16_t fktNum = 0;
+        //     if(std::string::npos == getParameter(data, "..nr=", fktNum, pos))
+        //     {
+        //         continue;
+        //     }
+        //     uint16_t fktType = 0;
+        //     if(std::string::npos == getParameter(data, "..typ=", fktType, pos))
+        //     {
+        //         continue;
+        //     }
+        //     uint16_t fktTime = 0;
+        //     getParameter(data, "..dauer=", fktTime, pos);
+        //     // uint16_t fktValue = 0;
+        //     // getParameter(data, "..wert=", fktValue, pos);
+        //     locoData.functionData.emplace_back(FunctionData{locoFunctionString[fktType], fktNum, "", fktTime});
+        // }         
         result = true;
     }
     return result;

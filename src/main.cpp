@@ -235,6 +235,7 @@ void setup()
     {
       auto lambdaWriteFile = [](std::string *data)
       {
+        WebService::getInstance()->setLocoList(locoManagment.getLocoList());
         if (nullptr != data)
         { /*Serial.println(data->c_str());*/
           lokomotiveCs2.print(data->c_str());
@@ -256,7 +257,7 @@ void setup()
               return 0;
             };
 
-            std::string sql = "insert into vehicles(id,name,image_name,type,max_speed,address) values(1,'" + locoData.name + "','" + locoData.name + ".png'," + "0,120," + std::to_string(locoData.adress) + ")";
+            std::string sql = "insert into vehicles(id,name,image_name,type,max_speed,address) values(" + std::to_string(locoId) + ",'" + locoData.name + "','" + locoData.name + ".png'," + "0,120," + std::to_string(locoData.adress) + ")";
 
             if (sqlite3_exec(z21Database, sql.c_str(), callback, (void *)data, &zErrMsg) != SQLITE_OK)
             {

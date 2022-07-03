@@ -46,6 +46,7 @@ private:
     AutoConnectCheckbox m_progActive;
     AutoConnectCheckbox m_readingLoco;
     AutoConnectSubmit m_saveButton;  
+    AutoConnectSubmit m_getZ21DbButton;  
     AutoConnectAux m_auxZ60ConfigStatus;
     AutoConnectText m_readingStatus;
     AutoConnectText m_locoNames;

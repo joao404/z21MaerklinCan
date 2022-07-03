@@ -10,6 +10,7 @@ WebService::WebService()
       m_progActive("progActive", "progActive", "Trackprogramming activ", false),
       m_readingLoco("readingLoco", "readingLoco", "Read locos from Mobile Station", false),
       m_saveButton("saveButton", "Run", "/z60configstatus"),
+      m_getZ21DbButton("getZ21DbButton", "Download Z21 Database", "/z21.html"),
       m_auxZ60ConfigStatus("/z60configstatus", "Z60 Config Status"),
       m_readingStatus("readingStatus", "readingStatus", "Reading locos: %s"),
       m_locoNames("locoNames", "locoNames", "%s"),
@@ -88,6 +89,24 @@ WebService::WebService()
                             " .hardvers=ESP,1\n"
                             ""
                         )); });
+
+    // m_WebServer.on("/ajaxlokliste", [this]()
+    //                {
+    //                     Serial.println("ajaxlokliste requested");
+    //                     std::string xml = "<?xml version='1.0'?>";
+    //                     xml += "<xml>";
+    //                     if(nullptr != m_locoList)
+    //                     {
+    //                         int i = 0;
+    //                         for (auto iterator = m_locoList->begin(); iterator != m_locoList->end(); iterator++, i++)
+    //                         {
+    //                             xml += "<loco" + std::to_string(i) + ">";
+    //                             xml += iterator->c_str();
+    //                             xml += "</loco" + std::to_string(i) + ">";
+    //                         }
+    //                     }
+    //                     xml += "</xml>";
+    //                     m_WebServer.send(200, "text/plain", xml.c_str()); });
 }
 
 WebService *WebService::getInstance()
@@ -152,7 +171,12 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
                             {
                                 aux["readingStatus"].value = "Finished with";
                                 aux["readingStatus"].value += m_lokomotiveAvailable ? "Success" : "Failure";
-                                if(nullptr != m_locoList)
+                            }
+                            else
+                            {
+                                aux["readingStatus"].value = "Running";
+                            }
+                            if(nullptr != m_locoList)
                                 {
                                     aux["locoNames"].value = "";
                                     for(auto loco : *m_locoList)
@@ -165,11 +189,6 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
                                 {
                                     aux["locoNames"].value = "nullptr";
                                 }
-                            }
-                            else
-                            {
-                                aux["readingStatus"].value = "Running";
-                            }
                             
                             return String(); });
 
@@ -177,12 +196,12 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
 
     m_AutoConnect.onNotFound(WebService::handleNotFound);
 
-    m_auxZ60Config.add({m_deleteLocoConfig, m_defaultLocoCs2, m_progActive, m_readingLoco, m_saveButton});
-    m_auxZ60ConfigStatus.add({m_readingStatus, m_locoNames, m_reloadButton});
+    m_auxZ60Config.add({m_deleteLocoConfig, m_defaultLocoCs2, m_progActive, m_readingLoco, m_saveButton, m_getZ21DbButton});
+    m_auxZ60ConfigStatus.add({m_readingStatus, m_locoNames, m_reloadButton, m_getZ21DbButton});
 
     m_AutoConnect.join(m_auxZ60Config);
     m_AutoConnect.join(m_auxZ60ConfigStatus);
-    //m_AutoConnect.append("/z21.html", "z21DB");
+    // m_AutoConnect.append("/z21.html", "z21DB");
 
     m_AutoConnect.begin();
 }
