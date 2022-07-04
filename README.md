@@ -15,7 +15,6 @@ Known problems:
 - z21 app does not get stop or go command from MS. Reason unknown
 
 ToDo:
-- Configuration Writing for z21
 - Reading of configuration from additional MS2 with software version less than 3.0
 
 Wich:
