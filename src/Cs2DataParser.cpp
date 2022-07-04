@@ -16,107 +16,108 @@
 
 #include "Cs2DataParser.h"
 
-static const char *locoFunctionString[] = {
-    " ",
-    "light",          // Stirnbeleuchtung
-    "interior_light", // Innenbeleuchtung
-    "back_light",     // Rücklicht
-    "light",          // Fernlicht
-    "sound2",         // Geräusch
-    "Pantograf",
-    "steam", // Rauch
-    "Rangiergang",
-    "couple", // Telexkupplung beidseitig
-    "bugle",  // Horn
-    "Schaffnerpfiff",
-    "whistle_short", // Pfeife
-    "bell",          // Glocke
-    "Links/Rechts",
-    "Heben/Senken",
-    "Drehen links",
-    "Kranarm heben/senken",
-    "ABV",
-    "Pumpe",
-    "Bremsenquietschen",
-    "Schaltstufen",
-    "Generator",
-    "Betriebsgeräusch",
-    "Motor",
-    "Bahnhofsansage",
-    "Kohle schaufeln",
-    "Türen schließen",
-    "Türe öffnen",
-    "Lüftergeräusch",
-    "Lüfter",
-    "Feuerbüchse",
-    "Innenbeleuchtung",
-    "Tischlampe Ep. IV",
-    "Tischlampe Ep.III",
-    "Tischlampe Ep. II",
-    "Schüttelrost",
-    "Schienenstoß",
-    "Nummernschild",
-    "Betriebsgeräusch",
-    "Zuglaufschild",
-    "Führerstand hinten",
-    "Führerstand vorn",
-    "Kuppeln",
-    "Pufferstoß",
-    "Zugansage",
-    "Kranhaken",
-    "Blinklicht",
-    "Führerstandsbel.",
-    "Pressluft",
-    "F0",
-    "F1",
-    "F2",
-    "F3",
-    "F4",
-    "F5",
-    "F6",
-    "F7",
-    "F8",
-    "F9",
-    "F10",
-    "F11",
-    "F12",
-    "F13",
-    "F14",
-    "F15",
-    "F16",
-    "F17",
-    "F18",
-    "F19",
-    "F20",
-    "F21",
-    "F22",
-    "F23",
-    "F24",
-    "F25",
-    "F26",
-    "F27",
-    "F28",
-    "F29",
-    "F30",
-    "F31",
-    "Telexkupplung hinten",
-    "Telexkupplung vorne",
-    "Pantograf hinten",
-    "Pantograf vorne",
-    "Licht hinten",
-    "Licht vorne",
-    "Heben",
-    "Lüfter",
-    "Triebwerksbeleuchtung",
-    "Zylinder ausblasen",
-    "Dampfstoß",
-    "Kran",
-    "Auf",
-    "Ab",
-    "Links",
-    "Rechts",
-    "Drehen rechts",
-    "Magnet"};
+static const Cs2DataParser::LocoFunctionType functionType[] = {
+    {"", "", 0},
+    {"Stirnbeleuchtung", "light", 0},          // Stirnbeleuchtung
+    {"Innenbeleuchtung", "interior_light", 0}, // Innenbeleuchtung
+    {"Rücklicht", "back_light", 0},    // Rücklicht
+    {"Fernlicht", "light", 0},         // Fernlicht
+    {"Geräusch", "sound1", 0},        // Geräusch
+    {"Pantograf", "", 0},
+    {"Rauch", "steam", 0},// Rauch
+    {"Rangiergang", "hump_gear", 0}, // Rangiergang
+    {"Telexkupplung", "couple", 0},// Telexkupplung beidseitig
+    {"Horn", "bugle", 1}, // Horn
+    {"Schaffnerpfiff", "", 1},
+    {"Pfeife", "whistle_short", 1}, // Pfeife
+    {"Glocke", "bell", 1},          // Glocke
+    {"Links/Rechts", "", 1},
+    {"Heben/Senken", "", 1},
+    {"Drehen links", "", 1},
+    {"Kranarm heben/senken", "", 1},
+    {"ABV", "", 0},
+    {"Pumpe", "", 0},
+    {"Bremsenquietschen", "", 0},
+    {"Schaltstufen", "", 0},
+    {"Generator", "", 0},
+    {"Betriebsgeräusch", "", 0},
+    {"Motor", "", 0},
+    {"Bahnhofsansage", "", 1},
+    {"Kohle schaufeln", "", 0},
+    {"Türen schließen", "", 1},
+    {"Türe öffnen", "", 1},
+    {"Lüftergeräusch", "", 0},
+    {"Lüfter", "", 0},
+    {"Feuerbüchse", "", 0},
+    {"Innenbeleuchtung", "", 0},
+    {"Tischlampe Ep. IV", "", 0},
+    {"Tischlampe Ep.III", "", 0},
+    {"Tischlampe Ep. II", "", 0},
+    {"Schüttelrost", "", 0},
+    {"Schienenstoß", "", 0},
+    {"Nummernschild", "", 0},
+    {"Betriebsgeräusch", "", 0},
+    {"Zuglaufschild", "", 0},
+    {"Führerstand hinten", "", 0},
+    {"Führerstand vorn", "", 0},
+    {"Kuppeln", "couple", 0}, // Kuppeln
+    {"Pufferstoß", "", 0},
+    {"Zugansage", "", 0},
+    {"Kranhaken", "", 0},
+    {"Blinklicht", "", 0},
+    {"Führerstandsbel.", "", 0},
+    {"Pressluft", "", 0},
+    {"F0", "", 0},
+    {"F1", "", 0},
+    {"F2", "", 0},
+    {"F3", "", 0},
+    {"F4", "", 0},
+    {"F5", "", 0},
+    {"F6", "", 0},
+    {"F7", "", 0},
+    {"F8", "", 0},
+    {"F9", "", 0},
+    {"F10", "", 0},
+    {"F11", "", 0},
+    {"F12", "", 0},
+    {"F13", "", 0},
+    {"F14", "", 0},
+    {"F15", "", 0},
+    {"F16", "", 0},
+    {"F17", "", 0},
+    {"F18", "", 0},
+    {"F19", "", 0},
+    {"F20", "", 0},
+    {"F21", "", 0},
+    {"F22", "", 0},
+    {"F23", "", 0},
+    {"F24", "", 0},
+    {"F25", "", 0},
+    {"F26", "", 0},
+    {"F27", "", 0},
+    {"F28", "", 0},
+    {"F29", "", 0},
+    {"F30", "", 0},
+    {"F31", "", 0},
+    {"Telexkupplung hinten", "couple", 0}, // Telexkupplung hinten
+    {"Telexkupplung vorne", "couple", 0}, // Telexkupplung vorne
+    {"Pantograf hinten", "", 0},
+    {"Pantograf vorne", "", 0},
+    {"Licht hinten", "", 0},
+    {"Licht vorne", "", 0},
+    {"Heben", "", 0},
+    {"Lüfter", "", 0},
+    {"Triebwerksbeleuchtung", "", 0},
+    {"Zylinder ausblasen", "", 0},
+    {"Dampfstoß", "", 0},
+    {"Kran", "", 0},
+    {"Auf", "", 1},
+    {"Ab", "", 1},
+    {"Links", "", 1},
+    {"Rechts", "", 1},
+    {"Drehen rechts", "", 1},
+    {"Magnet", "", 0}
+    };
 bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
 {
     bool result{false};
@@ -163,7 +164,7 @@ bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
             // getParameter(data, "..wert=", fktValue, pos);
             if (0 != fktType)
             {
-                locoData.functionData.emplace_back(FunctionData{locoFunctionString[fktType], fktNum, "", fktTime});
+                locoData.functionData.emplace_back(FunctionData{functionType[fktType].iconName, functionType[fktType].shortcut, fktNum, functionType[fktType].buttonType, fktTime});
             }
             startPos = pos;
         }
@@ -188,7 +189,7 @@ bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
             // getParameter(data, "..wert=", fktValue, pos);
             if (0 != fktType)
             {
-                locoData.functionData.emplace_back(FunctionData{locoFunctionString[fktType], fktNum, "", fktTime});
+                locoData.functionData.emplace_back(FunctionData{functionType[fktType].iconName, functionType[fktType].shortcut, fktNum, functionType[fktType].buttonType, fktTime});
             }
         }
         result = true;

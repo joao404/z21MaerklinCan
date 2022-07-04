@@ -267,7 +267,7 @@ void setup()
 
             for (auto iterator = locoData.functionData.begin(); iterator != locoData.functionData.end(); ++iterator)
             {
-              sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(" + std::to_string(functionId) + "," + std::to_string(locoId) + ",0,'','0',0,'"+ iterator->name  +"',"+ std::to_string(iterator->function) + ",1,0)";
+              sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(" + std::to_string(functionId) + "," + std::to_string(locoId) + "," + std::to_string(iterator->buttonType) + ",'','0',0,'"+ iterator->imageName  +"',"+ std::to_string(iterator->function) + ",1,0)";
               if (sqlite3_exec(z21Database, sql.c_str(), callback, (void *)data, &zErrMsg) != SQLITE_OK)
               {
                 Serial.printf("SQL error: %s\n", zErrMsg);

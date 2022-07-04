@@ -25,9 +25,10 @@ class Cs2DataParser
 public:
 	struct FunctionData
 	{
-		std::string name;
+		std::string imageName;
+		std::string shortcut;
 		uint16_t function;
-		std::string buttonType;
+		uint8_t buttonType;
 		uint16_t time;
 	};
 
@@ -36,6 +37,13 @@ public:
 		std::string name;
 		uint16_t adress;
 		std::vector<FunctionData> functionData;
+	};
+
+	struct LocoFunctionType
+	{
+		const char* shortcut;
+		const char* iconName;
+		uint8_t buttonType;
 	};
 
 	static bool parseCs2ToLocoData(std::string *data, LocoData &locoData);
