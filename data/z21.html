@@ -6,7 +6,7 @@
 	<script src="js/jszip.min.js" type="text/javascript"></script>
 	<script src="js/FileSaver.js" type="text/javascript"></script>
 
-	<a href="/">Back to Home</a> 
+	<a href="/">Back to Home</a>
 
 	<canvas id="locoNameCanvas" width="200" height="50" style="border:1px solid #5f5d5d;">
 		Your browser does not support the HTML5 canvas tag.</canvas>
@@ -69,8 +69,8 @@
 			});
 
 			// When all promises have resolved, use the resulting array of blobs:
-			Promise.all(promises).then(()=> {
-				zip.generateAsync({ type: "blob" })
+			Promise.all(promises).then(() => {
+				zip.generateAsync({ type: "blob", mimeType: "application/octet-stream" })
 					.then(function (content) {
 						saveAs(content, "Z60.z21");
 						document.getElementById("placeholder").innerText = "Success";
