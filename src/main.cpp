@@ -237,7 +237,8 @@ void setup()
       {
         WebService::getInstance()->setLocoList(locoManagment.getLocoList());
         if (nullptr != data)
-        { /*Serial.println(data->c_str());*/
+        {
+          // Serial.println(data->c_str());
           lokomotiveCs2.print(data->c_str());
           // get locoinfo from data. Every file is only one loco
           // write loco data and functions to sqlite
@@ -267,13 +268,16 @@ void setup()
 
             for (auto iterator = locoData.functionData.begin(); iterator != locoData.functionData.end(); ++iterator)
             {
-              sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(" + std::to_string(functionId) + "," + std::to_string(locoId) + "," + std::to_string(iterator->buttonType) + ",'" + iterator->shortcut + "','0',0,'"+ iterator->imageName  +"',"+ std::to_string(iterator->function) + ",1,0)";
+              sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(" + std::to_string(functionId) + "," + std::to_string(locoId) + "," + std::to_string(iterator->buttonType) + ",'" + iterator->shortcut + "','0'," + std::to_string(iterator->function) + ",'"+ iterator->imageName  +"',"+ std::to_string(iterator->function) + ",1,0)";
               if (sqlite3_exec(z21Database, sql.c_str(), callback, (void *)data, &zErrMsg) != SQLITE_OK)
               {
-                Serial.printf("SQL error: %s\n", zErrMsg);
+                Serial.printf("SQL error: %s | %s\n", zErrMsg, sql.c_str());
                 sqlite3_free(zErrMsg);
               }
-              functionId++;
+              else
+              {
+                functionId++;
+              }
             }
             locoId++;
           }

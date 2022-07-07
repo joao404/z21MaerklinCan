@@ -28,7 +28,7 @@ public:
 		std::string imageName;
 		std::string shortcut;
 		uint16_t function;
-		uint8_t buttonType;
+		uint16_t buttonType;
 		uint16_t time;
 	};
 
@@ -49,6 +49,7 @@ public:
 	static bool parseCs2ToLocoData(std::string *data, LocoData &locoData);
 
 private:
+	static std::string::size_type getParameterHex(std::string *data, std::string parameter, uint16_t &result, std::string::size_type startpos = 0);
 	static std::string::size_type getParameter(std::string *data, std::string parameter, uint16_t &result, std::string::size_type startpos = 0);
 	static std::string::size_type getParameter(std::string *data, std::string parameter, std::string &result, std::string::size_type startpos = 0);
 };

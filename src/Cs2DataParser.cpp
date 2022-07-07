@@ -16,18 +16,18 @@
 
 #include "Cs2DataParser.h"
 
-static const Cs2DataParser::LocoFunctionType functionType[] = {
-    {"", "", 0},
-    {"Stirnbeleuchtung", "light", 0},          // Stirnbeleuchtung
+static const std::vector<Cs2DataParser::LocoFunctionType> functionType = {
+    {" ", " ", 0},
+    {"Licht", "light", 0},                     // Stirnbeleuchtung
     {"Innenbeleuchtung", "interior_light", 0}, // Innenbeleuchtung
-    {"Rücklicht", "back_light", 0},    // Rücklicht
-    {"Fernlicht", "light", 0},         // Fernlicht
-    {"Geräusch", "sound1", 0},        // Geräusch
+    {"Rücklicht", "back_light", 0},            // Rücklicht
+    {"Fernlicht", "light", 0},                 // Fernlicht
+    {"Geräusch", "sound1", 0},                 // Geräusch
     {"Pantograf", "", 0},
-    {"Rauch", "steam", 0},// Rauch
+    {"Rauch", "steam", 0},           // Rauch
     {"Rangiergang", "hump_gear", 0}, // Rangiergang
-    {"Telexkupplung", "couple", 0},// Telexkupplung beidseitig
-    {"Horn", "bugle", 1}, // Horn
+    {"Telexkupplung", "couple", 0},  // Telexkupplung beidseitig
+    {"Horn", "bugle", 1},            // Horn
     {"Schaffnerpfiff", "", 1},
     {"Pfeife", "whistle_short", 1}, // Pfeife
     {"Glocke", "bell", 1},          // Glocke
@@ -99,8 +99,8 @@ static const Cs2DataParser::LocoFunctionType functionType[] = {
     {"F29", "", 0},
     {"F30", "", 0},
     {"F31", "", 0},
-    {"Telexkupplung hinten", "couple", 0}, // Telexkupplung hinten
-    {"Telexkupplung vorne", "couple", 0}, // Telexkupplung vorne
+    {"Telex hinten", "couple", 0}, // Telexkupplung hinten
+    {"Telex vorne", "couple", 0},  // Telexkupplung vorne
     {"Pantograf hinten", "", 0},
     {"Pantograf vorne", "", 0},
     {"Licht hinten", "", 0},
@@ -116,8 +116,7 @@ static const Cs2DataParser::LocoFunctionType functionType[] = {
     {"Links", "", 1},
     {"Rechts", "", 1},
     {"Drehen rechts", "", 1},
-    {"Magnet", "", 0}
-    };
+    {"Magnet", "", 0}};
 bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
 {
     bool result{false};
@@ -128,7 +127,7 @@ bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
     if (0 == n)
     {
         std::string::size_type pos = getParameter(data, ".name=", locoData.name);
-        pos = getParameter(data, ".adresse=", locoData.adress);
+        pos = getParameterHex(data, ".adresse=", locoData.adress);
         std::string adressType;
         pos = getParameter(data, ".typ=", adressType);
         if ("mm" == adressType || "mm2_prg" == adressType || "mmm2_lok" == adressType)
@@ -164,11 +163,19 @@ bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
             // getParameter(data, "..wert=", fktValue, pos);
             if (0 != fktType)
             {
-                locoData.functionData.emplace_back(FunctionData{functionType[fktType].iconName, functionType[fktType].shortcut, fktNum, functionType[fktType].buttonType, fktTime});
+                if (functionType.size() > fktType)
+                {
+                    locoData.functionData.emplace_back(FunctionData{functionType[fktType].iconName, functionType[fktType].shortcut, fktNum, functionType[fktType].buttonType, fktTime});
+                }
+                else
+                {
+                    locoData.functionData.emplace_back(FunctionData{"weight", "unknown", fktNum, 0, fktTime});
+                }
             }
             startPos = pos;
         }
         pos = startPos;
+
         funktionenLength = sizeof(".funktionen_2\n");
         for (pos = data->find(".funktionen_2\n", pos); std::string::npos != pos; pos = data->find(".funktionen_2\n", pos))
         {
@@ -187,9 +194,16 @@ bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
             getParameter(data, "..dauer=", fktTime, pos);
             // uint16_t fktValue = 0;
             // getParameter(data, "..wert=", fktValue, pos);
-            if (0 != fktType)
+            if ((0 != fktType) && (1 != fktType))
             {
-                locoData.functionData.emplace_back(FunctionData{functionType[fktType].iconName, functionType[fktType].shortcut, fktNum, functionType[fktType].buttonType, fktTime});
+                if (functionType.size() > fktType)
+                {
+                    locoData.functionData.emplace_back(FunctionData{functionType[fktType].iconName, functionType[fktType].shortcut, fktNum, functionType[fktType].buttonType, fktTime});
+                }
+                else
+                {
+                    locoData.functionData.emplace_back(FunctionData{"weight", "unknown", fktNum, 0, fktTime});
+                }
             }
         }
         result = true;
@@ -197,13 +211,24 @@ bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
     return result;
 };
 
-std::string::size_type Cs2DataParser::getParameter(std::string *data, std::string parameter, uint16_t &result, std::string::size_type startpos)
+std::string::size_type Cs2DataParser::getParameterHex(std::string *data, std::string parameter, uint16_t &result, std::string::size_type startpos)
 {
     std::string dummy;
     std::string::size_type rv = getParameter(data, parameter, dummy, startpos);
     if (!dummy.empty())
     {
         result = static_cast<uint16_t>(std::stoul(dummy, nullptr, 16));
+    }
+    return rv;
+}
+
+std::string::size_type Cs2DataParser::getParameter(std::string *data, std::string parameter, uint16_t &result, std::string::size_type startpos)
+{
+    std::string dummy;
+    std::string::size_type rv = getParameter(data, parameter, dummy, startpos);
+    if (!dummy.empty())
+    {
+        result = static_cast<uint16_t>(std::stoul(dummy, nullptr, 10));
     }
     return rv;
 }
