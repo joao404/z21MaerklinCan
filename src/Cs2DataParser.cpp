@@ -130,7 +130,7 @@ bool Cs2DataParser::parseCs2ToLocoData(std::string *data, LocoData &locoData)
         pos = getParameterHex(data, ".adresse=", locoData.adress);
         std::string adressType;
         pos = getParameter(data, ".typ=", adressType);
-        if ("mm" == adressType || "mm2_prg" == adressType || "mmm2_lok" == adressType)
+        if ("mm" == adressType || "mm2_prg" == adressType || "mmm2_lok" == adressType || "mm2_dil8" == adressType)
         {
             locoData.adress += 2000;
         }

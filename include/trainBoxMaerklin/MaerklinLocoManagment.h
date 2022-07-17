@@ -96,6 +96,8 @@ private:
 
     bool m_isZLib{false};
 
+    uint16_t m_numberOfLoco{0};
+
     uint8_t m_currentLocoNum{0};
 
     uint8_t m_transmissionStarted{false};

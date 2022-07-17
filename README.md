@@ -15,7 +15,7 @@ Known problems:
 - z21 app does not get stop or go command from MS. Reason unknown
 
 ToDo:
-- Reading of configuration from additional MS2 with software version less than 3.0
+- Testing of reading of configuration from additional MS2 with software version less than 3.0
 
 Wich:
 - Reading of Mfx loco to make MS2 redundant => loco managment needed in that case.

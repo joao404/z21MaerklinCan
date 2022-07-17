@@ -67,6 +67,8 @@ void MaerklinCanInterfaceEsp32::update(Observable &observable, void *data)
       if (m_debug)
       {
         Serial.print("==> ");
+        Serial.print(frame->identifier, HEX);
+        Serial.print(" ");
         Serial.println(message);
       }
 #endif
@@ -99,7 +101,6 @@ bool MaerklinCanInterfaceEsp32::sendMessage(TrackMessage &message)
     Serial.println(message);
   }
 #endif
-
   bool result{false};
   if (nullptr != m_canInterface.get())
   {

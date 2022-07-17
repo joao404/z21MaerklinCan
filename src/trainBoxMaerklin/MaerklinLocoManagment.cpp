@@ -2,7 +2,7 @@
  * TrainBox Maerklin Loco Managment
  *
  * Copyright (C) 2022 Marcel Maage
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -15,6 +15,7 @@
  */
 
 #include "trainBoxMaerklin/MaerklinLocoManagment.h"
+#include "Cs2DataParser.h"
 
 MaerklinLocoManagment::MaerklinLocoManagment(uint32_t uid, MaerklinCanInterface &interface,
                                              std::vector<MaerklinStationConfig> &stationList, unsigned long messageTimeout,
@@ -44,6 +45,10 @@ void MaerklinLocoManagment::getLokomotiveConfig(void (*writeFileCallback)(std::s
     m_currentInfo.clear();
     m_currentType = DataType::Lokliste;
     startConfigDataRequest(m_currentType, &m_currentInfo, &m_buffer, 1);
+    // m_state = LocoManagmentState::WaitingForLocoNamen;
+    // m_currentInfo = "0 2";
+    // m_currentType = DataType::Loknamen;
+    // startConfigDataRequest(m_currentType, &m_currentInfo, &m_buffer, 1);
 }
 
 bool MaerklinLocoManagment::startConfigDataRequest(DataType type, std::string *info, std::string *buffer)
@@ -133,7 +138,7 @@ bool MaerklinLocoManagment::Ms2LocoToCs2Loco(std::string &locoName, std::string 
                     sprintf(intBuffer, "%u", functionNumber);
                     *cs2Data += intBuffer;
                     functionNumber++;
-                    index += (strLenFkt+1);
+                    index += (strLenFkt + 1);
                 }
                 else if (ms2Data->find(".typ2", index) == index)
                 {
@@ -219,13 +224,17 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                         // Serial.print(" with size ");
                         // Serial.println(m_buffer->substr(index, nameEnd - index).size());
                     }
+                    m_numberOfLoco = m_locoList.size();
                     m_currentLocoNum = 0;
-                    Serial.println("locos:");
-                    for (auto lok : m_locoList)
+                    if (m_debug)
                     {
-                        Serial.println(lok.c_str());
+                        Serial.println("locos:");
+                        for (auto lok : m_locoList)
+                        {
+                            Serial.println(lok.c_str());
+                        }
                     }
-                    if (m_locoList.size() > 0)
+                    if (m_numberOfLoco > 0)
                     {
                         if (nullptr != m_writeFileCallback)
                         {
@@ -240,7 +249,7 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                         if (m_debug)
                         {
                             Serial.print("Found ");
-                            Serial.print(m_locoList.size());
+                            Serial.print(m_numberOfLoco);
                             Serial.println(" locos");
                         }
                         m_state = LocoManagmentState::WaitingForLocoInfo;
@@ -260,7 +269,7 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                     {
                         // transform loco string into new string
                         std::string cs2LocoString;
-                        //Serial.print(data->c_str());
+                        // Serial.print(data->c_str());
                         Ms2LocoToCs2Loco(m_locoList.at(m_currentLocoNum), data, &cs2LocoString);
                         m_writeFileCallback(&cs2LocoString);
                     }
@@ -282,6 +291,60 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                     }
                 }
                 break;
+                case LocoManagmentState::WaitingForLocoNamen:
+                {
+                    if (0 == m_locoList.size())
+                    {
+                        // read maximum number of locomotives
+                        if (std::string::npos == Cs2DataParser::getParameter(data, ".wert=", m_numberOfLoco, 0))
+                        {
+                            if (nullptr != m_resultCallback)
+                            {
+                                m_resultCallback(true);
+                            }
+                            return;
+                        }
+                    }
+                    // get first loco
+                    std::string locoName;
+                    std::string::size_type pos = Cs2DataParser::getParameter(data, ".name=", locoName, 0);
+                    if (std::string::npos != pos)
+                    {
+                        m_locoList.emplace_back(locoName);
+                    }
+                    // get second loco if diff is high enough
+                    if (m_locoList.size() < m_numberOfLoco)
+                    {
+                        pos = Cs2DataParser::getParameter(data, ".name=", locoName, 0);
+                        if (std::string::npos != pos)
+                        {
+                            m_locoList.emplace_back(locoName);
+                        }
+                    }
+                    // check if all locos where received
+                    if (m_locoList.size() < m_numberOfLoco)
+                    {
+                        m_state = LocoManagmentState::WaitingForLocoNamen;
+                        m_currentInfo = std::to_string(m_locoList.size()) + " 2";
+                        m_currentType = DataType::Loknamen;
+                        startConfigDataRequest(m_currentType, &m_currentInfo, &m_buffer, 1);
+                    }
+                    else
+                    {
+                        // request first locoinfo
+                        m_currentLocoNum = 0;
+                        m_state = LocoManagmentState::WaitingForLocoInfo;
+                        m_currentType = DataType::Lokinfo;
+                        m_currentInfo = m_locoList.at(m_currentLocoNum);
+                        startConfigDataRequest(m_currentType, &m_currentInfo, &m_buffer, 1);
+                    }
+                    // Serial.printf("LocoNamen:%s", data);
+                    if (nullptr != m_resultCallback)
+                    {
+                        m_resultCallback(true);
+                    }
+                }
+                break;
                 default:
                     break;
                 }
@@ -299,6 +362,7 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
             case LocoManagmentState::WaitingForLocoList:
                 // Does not seem to work
                 // Switch to old version
+                m_locoList.clear();
                 m_state = LocoManagmentState::WaitingForLocoNamen;
                 m_currentInfo = "0 2";
                 m_currentType = DataType::Loknamen;

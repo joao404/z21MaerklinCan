@@ -47,8 +47,6 @@ public:
 	};
 
 	static bool parseCs2ToLocoData(std::string *data, LocoData &locoData);
-
-private:
 	static std::string::size_type getParameterHex(std::string *data, std::string parameter, uint16_t &result, std::string::size_type startpos = 0);
 	static std::string::size_type getParameter(std::string *data, std::string parameter, uint16_t &result, std::string::size_type startpos = 0);
 	static std::string::size_type getParameter(std::string *data, std::string parameter, std::string &result, std::string::size_type startpos = 0);
