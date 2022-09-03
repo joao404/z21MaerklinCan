@@ -26,6 +26,7 @@ private:
     static WebService* m_instance;
     WebService();
     static void handleNotFound(void);
+    static String postUpload(AutoConnectAux& aux, PageArgument& args);
     String getContentType(const String &filename);
 
     void (*m_deleteLocoConfigFkt)(void);
@@ -46,9 +47,14 @@ private:
     AutoConnectCheckbox m_progActive;
     AutoConnectCheckbox m_readingLoco;
     AutoConnectSubmit m_saveButton;  
+    AutoConnectFile m_uploadFile;
+    AutoConnectSubmit m_startUploadButton;
     AutoConnectSubmit m_getZ21DbButton;  
+
     AutoConnectAux m_auxZ60ConfigStatus;
     AutoConnectText m_readingStatus;
     AutoConnectText m_locoNames;
-    AutoConnectSubmit m_reloadButton;     
+    AutoConnectSubmit m_reloadButton;   
+
+    AutoConnectAux m_auxZ60UploadStatus;
 };
