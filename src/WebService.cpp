@@ -11,13 +11,11 @@ WebService::WebService()
       m_readingLoco("readingLoco", "readingLoco", "Read locos from Mobile Station", false),
       m_saveButton("saveButton", "Run", "/z60configstatus"),
       m_uploadFile("uploadFile", "uploadFile", "Select file:"),
-      m_startUploadButton("startUploadButton", "Upload File", "/upload"),
       m_getZ21DbButton("getZ21DbButton", "Download Z21 Database", "/z21.html"),
       m_auxZ60ConfigStatus("/z60configstatus", "Z60 Config Status"),
       m_readingStatus("readingStatus", "readingStatus", "Reading locos: %s"),
       m_locoNames("locoNames", "locoNames", "%s"),
-      m_reloadButton("realoadButton", "Reload", "/z60configstatus"),
-      m_auxZ60UploadStatus("/upload", "Z60 Upload Status")
+      m_reloadButton("realoadButton", "Reload", "/z60configstatus")
 {
     m_WebServer.on("/can", [this]()
                    {
@@ -199,15 +197,13 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
 
     m_AutoConnect.onNotFound(WebService::handleNotFound);
 
-    m_auxZ60Config.add({m_deleteLocoConfig, m_defaultLocoCs2, m_progActive, m_readingLoco, m_saveButton, m_uploadFile, m_startUploadButton, m_getZ21DbButton});
+    m_auxZ60Config.add({m_deleteLocoConfig, m_defaultLocoCs2, m_progActive, m_readingLoco, m_uploadFile, m_saveButton, m_getZ21DbButton});
     m_auxZ60ConfigStatus.add({m_readingStatus, m_locoNames, m_reloadButton, m_getZ21DbButton});
-    m_auxZ60UploadStatus.add({m_locoNames, m_getZ21DbButton});
 
     m_AutoConnect.join(m_auxZ60Config);
     m_AutoConnect.join(m_auxZ60ConfigStatus);
-    m_AutoConnect.join(m_auxZ60UploadStatus);
 
-    m_auxZ60UploadStatus.on(WebService::postUpload);
+    m_auxZ60ConfigStatus.on(WebService::postUpload);
 
     // m_AutoConnect.append("/z21.html", "z21DB");
 
@@ -281,8 +277,8 @@ void WebService::handleNotFound(void)
 
 String WebService::postUpload(AutoConnectAux &aux, PageArgument &args)
 {
-    String result{"postUpload"};
-    AutoConnectFile &upload = m_instance->m_uploadFile;
+    String result{"Uploaded" +  m_instance->m_uploadFile.value};
+    AutoConnectFile &upload {m_instance->m_uploadFile};
     Serial.printf("Uploaded: %s\n", upload.value.c_str());
     if (SPIFFS.exists(String("/" + upload.value).c_str()))
     {
@@ -296,8 +292,8 @@ String WebService::postUpload(AutoConnectAux &aux, PageArgument &args)
     {
         result = "Not saved";
     }
-    //SPIFFS.end();
-    return result;
+    m_instance->m_readingStatus.value = result;
+    return String();
 }
 
 String WebService::getContentType(const String &filename)

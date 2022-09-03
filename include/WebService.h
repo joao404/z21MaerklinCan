@@ -10,23 +10,23 @@
 class WebService
 {
 public:
-    static WebService* getInstance();
+    static WebService *getInstance();
     virtual ~WebService();
 
     void cyclic();
 
-    void begin(AutoConnectConfig& autoConnectConfig, void (*deleteLocoConfigFkt)(void), void (*defaultLocoListFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void));
+    void begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoConfigFkt)(void), void (*defaultLocoListFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void));
 
     void setLokomotiveAvailable(bool isAvailable);
     void setTransmissionFinished(bool hasFinished);
 
-    void setLocoList(std::vector<std::string>* locoList){m_locoList = locoList;};
+    void setLocoList(std::vector<std::string> *locoList) { m_locoList = locoList; };
 
 private:
-    static WebService* m_instance;
+    static WebService *m_instance;
     WebService();
     static void handleNotFound(void);
-    static String postUpload(AutoConnectAux& aux, PageArgument& args);
+    static String postUpload(AutoConnectAux &aux, PageArgument &args);
     String getContentType(const String &filename);
 
     void (*m_deleteLocoConfigFkt)(void);
@@ -37,7 +37,7 @@ private:
     bool m_lokomotiveAvailable{true};
     bool m_transmissionFinished{true};
 
-    std::vector<std::string>* m_locoList{nullptr};
+    std::vector<std::string> *m_locoList{nullptr};
 
     WebServer m_WebServer;
     AutoConnect m_AutoConnect;
@@ -46,15 +46,12 @@ private:
     AutoConnectCheckbox m_defaultLocoCs2;
     AutoConnectCheckbox m_progActive;
     AutoConnectCheckbox m_readingLoco;
-    AutoConnectSubmit m_saveButton;  
     AutoConnectFile m_uploadFile;
-    AutoConnectSubmit m_startUploadButton;
-    AutoConnectSubmit m_getZ21DbButton;  
+    AutoConnectSubmit m_saveButton;
+    AutoConnectSubmit m_getZ21DbButton;
 
     AutoConnectAux m_auxZ60ConfigStatus;
     AutoConnectText m_readingStatus;
     AutoConnectText m_locoNames;
-    AutoConnectSubmit m_reloadButton;   
-
-    AutoConnectAux m_auxZ60UploadStatus;
+    AutoConnectSubmit m_reloadButton;
 };
