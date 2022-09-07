@@ -75,15 +75,11 @@ class MaerklinCanInterfaceEsp32 : public MaerklinCanInterface, public Observer
      */
     bool receiveMessage(TrackMessage &message) override;
 
-    virtual void notifyCanReceived(twai_message_t frame){};
-
     void cyclic();
 
     void update(Observable& observable, void* data);
 
     void errorHandling();
-
-
     
     private:
         std::shared_ptr<CanInterface> m_canInterface;
