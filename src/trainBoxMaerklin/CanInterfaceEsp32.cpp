@@ -14,7 +14,7 @@
  * LICENSE file for more details.
  */
 
-#include "trainBoxMaerklin/CanInterface.h"
+#include "trainBoxMaerklin/CanInterfaceEsp32.h"
 #include <Arduino.h>
 #include <driver/twai.h>
 #include <driver/gpio.h>
@@ -24,15 +24,15 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
-CanInterface::CanInterface()
+CanInterfaceEsp32::CanInterfaceEsp32()
 {
 }
 
-CanInterface::~CanInterface()
+CanInterfaceEsp32::~CanInterfaceEsp32()
 {
 }
 
-void CanInterface::begin()
+void CanInterfaceEsp32::begin()
 {
     Serial.println(F("Setting up TWAI..."));
     /* set TWAI pins and baudrate */
@@ -75,7 +75,7 @@ void CanInterface::begin()
     }
 }
 
-void CanInterface::cyclic()
+void CanInterfaceEsp32::cyclic()
 {
     twai_message_t frame;
     while (twai_receive(&frame, 0) == ESP_OK)
@@ -85,10 +85,21 @@ void CanInterface::cyclic()
     errorHandling();
 }
 
-bool CanInterface::transmit(twai_message_t& frame, uint16_t timeoutINms)
+bool CanInterfaceEsp32::transmit(CanMessage& frame, uint16_t timeoutINms)
 {
+    twai_message_t twaiFrame;
+    twaiFrame.extd = frame.extd;
+    twaiFrame.ss = frame.ss;
+    twaiFrame.identifier = frame.identifier;
+    twaiFrame.data_length_code = frame.data_length_code;
+    #if TWAI_FRAME_MAX_DLC > 8
+    memcpy(&twaiFrame.data[0], &frame.data[0], 8);
+    #else
+    memcpy(&twaiFrame.data[0], &frame.data[0], TWAI_FRAME_MAX_DLC);
+    #endif
+    //std::copy(std::begin(frame.data), std::end(frame.data), std::begin(twaiFrame.data));
     bool result {true};
-    if(twai_transmit(&frame, pdMS_TO_TICKS(timeoutINms)) != ESP_OK)
+    if(twai_transmit(&twaiFrame, pdMS_TO_TICKS(timeoutINms)) != ESP_OK)
     {
         result = false;
         errorHandling();
@@ -96,12 +107,28 @@ bool CanInterface::transmit(twai_message_t& frame, uint16_t timeoutINms)
     return result;
 }
 
-bool CanInterface::receive(twai_message_t& frame, uint16_t timeoutINms)
+bool CanInterfaceEsp32::receive(CanMessage& frame, uint16_t timeoutINms)
 {
-    return (twai_receive(&frame, pdMS_TO_TICKS(timeoutINms)) == ESP_OK);
+    twai_message_t twaiFrame;
+    bool result {false};
+    if(twai_receive(&twaiFrame, pdMS_TO_TICKS(timeoutINms)) == ESP_OK)
+    {
+        frame.extd = twaiFrame.extd;
+        frame.ss = frame.extd;
+        frame.identifier = twaiFrame.identifier;
+        frame.data_length_code = twaiFrame.data_length_code;
+        #if TWAI_FRAME_MAX_DLC > 8
+        memcpy(&frame.data[0], &twaiFrame.data[0], 8);
+        #else
+        memcpy(&frame.data[0], &twaiFrame.data[0], TWAI_FRAME_MAX_DLC);
+        #endif
+        //std::copy(std::begin(twaiFrame.data), std::end(twaiFrame.data), std::begin(frame.data));
+        result = true;
+    }
+    return result;
 }
 
-void CanInterface::errorHandling()
+void CanInterfaceEsp32::errorHandling()
 {
     uint32_t alerts;
     twai_read_alerts(&alerts, 0);

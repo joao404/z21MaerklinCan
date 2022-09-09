@@ -21,12 +21,11 @@
 #include "trainBoxMaerklin/MaerklinCanInterface.h"
 #include "trainBoxMaerklin/CanInterface.h"
 #include "Helper/Observer.h"
-#include <driver/twai.h>
 
 //#define CAN_DEBUG
 
 
-class MaerklinCanInterfaceEsp32 : public MaerklinCanInterface, public Observer
+class MaerklinCanInterfaceObserver : public MaerklinCanInterface, public Observer
 {
     public:
 
@@ -35,13 +34,13 @@ class MaerklinCanInterfaceEsp32 : public MaerklinCanInterface, public Observer
 	 * Creates a new TrackController with the given hash and debugging
 	 * flag. A zero hash will result in a unique hash begin generated.
 	 */
-    MaerklinCanInterfaceEsp32(word hash, bool debug);
+    MaerklinCanInterfaceObserver(word hash, bool debug);
 
     /**
      * Is called when a TrackController is being destroyed. Does the
      * necessary cleanup. No need to call this manually.
      */
-    virtual ~MaerklinCanInterfaceEsp32();
+    virtual ~MaerklinCanInterfaceObserver();
 
     // set can observer for receiving and writing messages
     bool setCanObserver(std::shared_ptr<CanInterface> canInterface);

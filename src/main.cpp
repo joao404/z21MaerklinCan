@@ -21,7 +21,7 @@
 #include <EEPROM.h>
 
 #include "WebService.h"
-#include "trainBoxMaerklin/CanInterface.h"
+#include "trainBoxMaerklin/CanInterfaceEsp32.h"
 #include "trainBoxMaerklin/MaerklinLocoManagment.h"
 #include "z60.h"
 #include "Can2Lan.h"
@@ -30,7 +30,7 @@
 #include <SPIFFS.h>
 #include <sqlite3.h>
 
-std::shared_ptr<CanInterface> canInterface = std::make_shared<CanInterface>();
+std::shared_ptr<CanInterfaceEsp32> canInterface = std::make_shared<CanInterfaceEsp32>();
 
 const uint16_t hash{0};
 const uint32_t serialNumber{0xFFFFFFF0};

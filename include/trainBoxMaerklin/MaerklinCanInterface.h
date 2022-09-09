@@ -53,7 +53,7 @@ class TrackMessage : public Printable {
   /**
    * The actual message data bytes.
    */
-  uint8_t data[8];
+  std::array<uint8_t, 8> data;
 
   /**
    * Clears the message, setting all values to zero. Provides for

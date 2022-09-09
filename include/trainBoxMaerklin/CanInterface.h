@@ -17,23 +17,33 @@
 #pragma once
 
 #include "Helper/Observer.h"
-#include <driver/twai.h>
-
 
 class CanInterface : public Observable
 {
 public:
-    CanInterface();
-    virtual ~CanInterface();
+typedef struct {
+    union {
+        struct {
+            //The order of these bits must match deprecated message flags for compatibility reasons
+            uint32_t extd: 1;           /**< Extended Frame Format (29bit ID) */
+            uint32_t rtr: 1;            /**< Message is a Remote Frame */
+            uint32_t ss: 1;             /**< Transmit as a Single Shot Transmission. Unused for received. */
+            uint32_t self: 1;           /**< Transmit as a Self Reception Request. Unused for received. */
+            uint32_t dlc_non_comp: 1;   /**< Message's Data length code is larger than 8. This will break compliance with ISO 11898-1 */
+            uint32_t reserved: 27;      /**< Reserved bits */
+        };
+    };
+    uint32_t identifier;                /**< 11 or 29 bit identifier */
+    uint8_t data_length_code;           /**< Data length code */
+    std::array<uint8_t, 8> data;    /**< Data bytes (not relevant in RTR frame) */
+} CanMessage;
 
-    void begin();
+    CanInterface(){};
+    virtual ~CanInterface(){};
 
-    void cyclic();
+    virtual void begin() = 0;
 
-    bool transmit(twai_message_t& frame, uint16_t timeoutINms);
+    virtual bool transmit(CanMessage& frame, uint16_t timeoutINms) = 0;
 
-    bool receive(twai_message_t& frame, uint16_t timeoutINms);
-
-private:
-    void errorHandling();
+    virtual bool receive(CanMessage& frame, uint16_t timeoutINms) = 0;
 };

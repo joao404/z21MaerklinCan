@@ -75,9 +75,10 @@ void Can2Lan::begin(std::shared_ptr<CanInterface> canInterface, bool debug, bool
     }
     m_canInterface->attach(*this);
     // send magic start frame
-    twai_message_t frame;
+    CanInterface::CanMessage frame;
     frame.identifier = 0x360301UL;
-    frame.flags = TWAI_MSG_FLAG_EXTD | TWAI_MSG_FLAG_SS;
+    frame.extd = 1;
+    frame.ss = 1;
     frame.data_length_code = 5;
     for (int i = 0; i < frame.data_length_code; i++)
     {
@@ -98,7 +99,7 @@ void Can2Lan::update(Observable &observable, void *data)
     {
         if (nullptr != data)
         {
-            twai_message_t *frame = static_cast<twai_message_t *>(data);
+            CanInterface::CanMessage *frame = static_cast<CanInterface::CanMessage *>(data);
 
             uint8_t udpframe[16];
             memset(udpframe, 0, m_canFrameSize);
@@ -150,35 +151,36 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
     if (0 == (size % m_canFrameSize))
     {
         uint8_t numberOfMessages = size / m_canFrameSize;
-        twai_message_t tx_frame;
+        CanInterface::CanMessage txFrame;
         uint8_t *udpFramePtr = udpFrame;
         for (uint8_t index = 0; index < numberOfMessages;
              udpFramePtr = (udpFrame + (index * m_canFrameSize)), index++)
         {
             uint32_t canid = 0;
             memcpy(&canid, &udpFramePtr[0], 4);
-            tx_frame.identifier = ntohl(canid);
-            tx_frame.flags = TWAI_MSG_FLAG_EXTD | TWAI_MSG_FLAG_SS;
-            tx_frame.data_length_code = udpFramePtr[4];
-            memcpy(&tx_frame.data, &udpFramePtr[5], 8);
+            txFrame.identifier = ntohl(canid);
+            txFrame.extd = 1;
+            txFrame.ss = 1;
+            txFrame.data_length_code = udpFramePtr[4];
+            memcpy(&txFrame.data, &udpFramePtr[5], 8);
 
             if (m_canDebug)
             {
                 Serial.print("UDP ");
-                Serial.print(tx_frame.identifier, HEX);
+                Serial.print(txFrame.identifier, HEX);
                 Serial.print(" ");
-                Serial.print(tx_frame.data_length_code, HEX);
+                Serial.print(txFrame.data_length_code, HEX);
                 Serial.print(" ");
-                for (int i = 0; i < (tx_frame.data_length_code); i++)
+                for (int i = 0; i < (txFrame.data_length_code); i++)
                 {
-                    Serial.print(tx_frame.data[i], HEX);
+                    Serial.print(txFrame.data[i], HEX);
                     Serial.print(" ");
                 }
                 Serial.print("\n");
             }
 
             // S88 event
-            if ((tx_frame.identifier & 0x00FF0000UL) == 0x00230000UL)
+            if ((txFrame.identifier & 0x00FF0000UL) == 0x00230000UL)
             {
                 m_udpInterface.broadcastTo(udpFramePtr, m_canFrameSize, m_destinationPortUdp); //, TCPIP_ADAPTER_IF_AP);
                 Can2Lan *interface = Can2Lan::getCan2Lan();
@@ -197,8 +199,8 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
             }
             else
             {
-                if (((tx_frame.identifier & 0x00FF0000UL) == 0x00310000UL) &&
-                    (tx_frame.data[6] == 0xEE) && (tx_frame.data[7] == 0xEE))
+                if (((txFrame.identifier & 0x00FF0000UL) == 0x00310000UL) &&
+                    (txFrame.data[6] == 0xEE) && (txFrame.data[7] == 0xEE))
                 {
                     if (m_debug)
                     {
@@ -216,19 +218,19 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
                 }
                 if (nullptr != m_canInterface)
                 {
-                    if (((tx_frame.identifier & 0x00FF0000UL) == 0x000C0000UL) &&
-                        (tx_frame.data_length_code == 5))
+                    if (((txFrame.identifier & 0x00FF0000UL) == 0x000C0000UL) &&
+                        (txFrame.data_length_code == 5))
                     {
                         // Block access for asking loko function value to prevent error in case of connected MS
                         continue;
                     }
-                    if (((tx_frame.identifier & 0x00FF0000UL) == 0x00080000UL) &&
-                        (tx_frame.data_length_code == 6)) // speed command received
+                    if (((txFrame.identifier & 0x00FF0000UL) == 0x00080000UL) &&
+                        (txFrame.data_length_code == 6)) // speed command received
                     {
                         // if speed is not set to zero, block to much speed commands
-                        if ((tx_frame.data[4] != 0) || (tx_frame.data[5] != 0))
+                        if ((txFrame.data[4] != 0) || (txFrame.data[5] != 0))
                         {
-                            uint32_t adr = (tx_frame.data[0] << 24) + (tx_frame.data[1] << 16) + (tx_frame.data[2] << 8) + tx_frame.data[3];
+                            uint32_t adr = (txFrame.data[0] << 24) + (txFrame.data[1] << 16) + (txFrame.data[2] << 8) + txFrame.data[3];
                             auto isAdr = [&adr](const DataLoco& i){return i.adrTrainbox == adr;};
                             auto finding = std::find_if(m_dataLocos.begin(), m_dataLocos.end(), isAdr);
                             unsigned long currentTimeINms = millis();
@@ -250,7 +252,7 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
                             }
                         }
                     }
-                    if (!m_canInterface->transmit(tx_frame, 500u))
+                    if (!m_canInterface->transmit(txFrame, 500u))
                     {
                         if (m_debug)
                         {
@@ -297,7 +299,7 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
         if (0 == (size % interface->m_canFrameSize))
         {
             uint8_t numberOfMessages = size / interface->m_canFrameSize;
-            twai_message_t tx_frame;
+            CanInterface::CanMessage txFrame;
             uint8_t *tcpFramePtr = tcpFrame;
             for (uint8_t index = 0; index < numberOfMessages; index++)
             {
@@ -305,28 +307,29 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
                 uint32_t canid = 0;
                 memcpy(&canid, &tcpFramePtr[0], 4);
                 /* TWAI is stored in network Big Endian format */
-                tx_frame.identifier = ntohl(canid);
-                tx_frame.flags = TWAI_MSG_FLAG_EXTD | TWAI_MSG_FLAG_SS;
-                tx_frame.data_length_code = tcpFramePtr[4];
-                memcpy(&tx_frame.data, &tcpFramePtr[5], 8);
+                txFrame.identifier = ntohl(canid);
+                txFrame.extd = 1;
+                txFrame.ss = 1;
+                txFrame.data_length_code = tcpFramePtr[4];
+                memcpy(&txFrame.data, &tcpFramePtr[5], 8);
 
                 if (interface->m_canDebug)
                 {
                     Serial.print("TCP ");
-                    Serial.print(tx_frame.identifier, HEX);
+                    Serial.print(txFrame.identifier, HEX);
                     Serial.print(" ");
-                    Serial.print(tx_frame.data_length_code, HEX);
+                    Serial.print(txFrame.data_length_code, HEX);
                     Serial.print(" ");
-                    for (int i = 0; i < (tx_frame.data_length_code); i++)
+                    for (int i = 0; i < (txFrame.data_length_code); i++)
                     {
-                        Serial.print(tx_frame.data[i], HEX);
+                        Serial.print(txFrame.data[i], HEX);
                         Serial.print(" ");
                     }
                     Serial.print("\n");
                 }
 
                 // Can Device registration
-                if ((tx_frame.identifier & 0x00FF0000UL) == 0x00000000UL)
+                if ((txFrame.identifier & 0x00FF0000UL) == 0x00000000UL)
                 {
                     if (tcpFramePtr[9] == 0x0C)
                     {
@@ -339,10 +342,10 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
                         tcpFramePtr[4] = 7;
                         tcpFramePtr[10] = 0xff;
                         tcpFramePtr[11] = 0xff;
-                        tx_frame.identifier |= 0x00010000UL;
-                        tx_frame.data_length_code = 7;
-                        tx_frame.data[5] = 0xff;
-                        tx_frame.data[6] = 0xff;
+                        txFrame.identifier |= 0x00010000UL;
+                        txFrame.data_length_code = 7;
+                        txFrame.data[5] = 0xff;
+                        txFrame.data[6] = 0xff;
                         if ((client->space() > interface->m_canFrameSize) && client->canSend())
                         {
                             client->add((const char *)tcpFramePtr, interface->m_canFrameSize);
@@ -351,12 +354,12 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
                         }
                     }
                 }
-                else if ((tx_frame.identifier & 0x00FF0000UL) == 0x00400000UL)
+                else if ((txFrame.identifier & 0x00FF0000UL) == 0x00400000UL)
                 {
                     Serial.print("Requested config:");
-                    for (int i = 0; i < (tx_frame.data_length_code); i++)
+                    for (int i = 0; i < (txFrame.data_length_code); i++)
                     {
-                        Serial.print((char)tx_frame.data[i]);
+                        Serial.print((char)txFrame.data[i]);
                     }
                     Serial.print("\n");
                     continue; // do not send over can or udp
@@ -365,7 +368,7 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
 
                 if (nullptr != interface->m_canInterface)
                 {
-                    if (!interface->m_canInterface->transmit(tx_frame, 1000u))
+                    if (!interface->m_canInterface->transmit(txFrame, 1000u))
                     {
                         if (interface->m_debug)
                         {

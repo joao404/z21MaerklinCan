@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "trainBoxMaerklin/MaerklinCanInterfaceEsp32.h"
+#include "trainBoxMaerklin/MaerklinCanInterfaceObserver.h"
 #include "trainBoxMaerklin/MaerklinConfigDataStream.h"
 #include "trainBoxMaerklin/MaerklinStationConfig.h"
 #include "z21/z21InterfaceEsp32.h"
@@ -25,7 +25,7 @@
 #include <vector>
 #include "Preferences.h"
 
-class z60 : public MaerklinCanInterfaceEsp32, private z21InterfaceEsp32
+class z60 : public MaerklinCanInterfaceObserver, private z21InterfaceEsp32
 {
 public:
     enum class AdrMode : uint8_t

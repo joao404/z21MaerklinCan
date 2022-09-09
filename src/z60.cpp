@@ -17,7 +17,7 @@
 #include "z60.h"
 
 z60::z60(uint16_t hash, uint32_t serialNumber, HwType hwType, uint32_t swVersion, int16_t port, bool debugZ60, bool debugZ21, bool debugTrainbox)
-    : MaerklinCanInterfaceEsp32(hash, debugTrainbox),
+    : MaerklinCanInterfaceObserver(hash, debugTrainbox),
       z21InterfaceEsp32(hwType, swVersion, port, debugZ21),
       m_serialNumber(serialNumber),
       m_programmingActiv(false),
@@ -73,7 +73,7 @@ void z60::begin()
     }
   }
 
-  MaerklinCanInterfaceEsp32::begin();
+  MaerklinCanInterfaceObserver::begin();
   z21InterfaceEsp32::begin();
 
   delay(1000);
@@ -923,19 +923,19 @@ void z60::notifyz21InterfaceRailPower(EnergyState State)
 
   if (EnergyState::csNormal == State)
   {
-    MaerklinCanInterfaceEsp32::sendSystemGo(0); // trainBoxUid);
+    MaerklinCanInterfaceObserver::sendSystemGo(0); // trainBoxUid);
     // TrackMessage out, in;
     // messageSystemGo(out);
     // exchangeMessage(out, in, 1000)
   }
   else if (EnergyState::csEmergencyStop == State)
   {
-    MaerklinCanInterfaceEsp32::sendSystemHalt(0); // trainBoxUid);
+    MaerklinCanInterfaceObserver::sendSystemHalt(0); // trainBoxUid);
     // TrainBoxMaerklinEsp32::sendSystemStop();
   }
   else if (EnergyState::csTrackVoltageOff == State)
   {
-    MaerklinCanInterfaceEsp32::sendSystemStop(0); // trainBoxUid);
+    MaerklinCanInterfaceObserver::sendSystemStop(0); // trainBoxUid);
   }
   z21InterfaceEsp32::setPower(State);
 }
