@@ -231,7 +231,8 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
                         if ((txFrame.data[4] != 0) || (txFrame.data[5] != 0))
                         {
                             uint32_t adr = (txFrame.data[0] << 24) + (txFrame.data[1] << 16) + (txFrame.data[2] << 8) + txFrame.data[3];
-                            auto isAdr = [&adr](const DataLoco& i){return i.adrTrainbox == adr;};
+                            auto isAdr = [&adr](const DataLoco &i)
+                            { return i.adrTrainbox == adr; };
                             auto finding = std::find_if(m_dataLocos.begin(), m_dataLocos.end(), isAdr);
                             unsigned long currentTimeINms = millis();
                             if (finding != m_dataLocos.end())

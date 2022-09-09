@@ -2,7 +2,7 @@
  * CanInterfaceEsp32
  *
  * Copyright (C) 2022 Marcel Maage
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -19,7 +19,6 @@
 #include "trainBoxMaerklin/CanInterface.h"
 #include <driver/twai.h>
 
-
 class CanInterfaceEsp32 : public CanInterface
 {
 public:
@@ -30,9 +29,9 @@ public:
 
     void cyclic();
 
-    bool transmit(CanMessage& frame, uint16_t timeoutINms) override;
+    bool transmit(CanMessage &frame, uint16_t timeoutINms) override;
 
-    bool receive(CanMessage& frame, uint16_t timeoutINms) override;
+    bool receive(CanMessage &frame, uint16_t timeoutINms) override;
 
 private:
     void errorHandling();

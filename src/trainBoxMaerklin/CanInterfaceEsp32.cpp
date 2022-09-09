@@ -2,7 +2,7 @@
  * CanInterface
  *
  * Copyright (C) 2022 Marcel Maage
- * 
+ *
  * This library is free software; you twai redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -38,8 +38,8 @@ void CanInterfaceEsp32::begin()
     /* set TWAI pins and baudrate */
     twai_general_config_t general_config = {
         .mode = TWAI_MODE_NORMAL,
-        .tx_io = (gpio_num_t)GPIO_NUM_4,//11,//5,
-        .rx_io = (gpio_num_t)GPIO_NUM_5,//10,//4,
+        .tx_io = (gpio_num_t)GPIO_NUM_4, // 11,//5,
+        .rx_io = (gpio_num_t)GPIO_NUM_5, // 10,//4,
         .clkout_io = (gpio_num_t)TWAI_IO_UNUSED,
         .bus_off_io = (gpio_num_t)TWAI_IO_UNUSED,
         .tx_queue_len = 120,
@@ -85,21 +85,21 @@ void CanInterfaceEsp32::cyclic()
     errorHandling();
 }
 
-bool CanInterfaceEsp32::transmit(CanMessage& frame, uint16_t timeoutINms)
+bool CanInterfaceEsp32::transmit(CanMessage &frame, uint16_t timeoutINms)
 {
     twai_message_t twaiFrame;
     twaiFrame.extd = frame.extd;
     twaiFrame.ss = frame.ss;
     twaiFrame.identifier = frame.identifier;
     twaiFrame.data_length_code = frame.data_length_code;
-    #if TWAI_FRAME_MAX_DLC > 8
+#if TWAI_FRAME_MAX_DLC > 8
     memcpy(&twaiFrame.data[0], &frame.data[0], 8);
-    #else
+#else
     memcpy(&twaiFrame.data[0], &frame.data[0], TWAI_FRAME_MAX_DLC);
-    #endif
-    //std::copy(std::begin(frame.data), std::end(frame.data), std::begin(twaiFrame.data));
-    bool result {true};
-    if(twai_transmit(&twaiFrame, pdMS_TO_TICKS(timeoutINms)) != ESP_OK)
+#endif
+    // std::copy(std::begin(frame.data), std::end(frame.data), std::begin(twaiFrame.data));
+    bool result{true};
+    if (twai_transmit(&twaiFrame, pdMS_TO_TICKS(timeoutINms)) != ESP_OK)
     {
         result = false;
         errorHandling();
@@ -107,22 +107,22 @@ bool CanInterfaceEsp32::transmit(CanMessage& frame, uint16_t timeoutINms)
     return result;
 }
 
-bool CanInterfaceEsp32::receive(CanMessage& frame, uint16_t timeoutINms)
+bool CanInterfaceEsp32::receive(CanMessage &frame, uint16_t timeoutINms)
 {
     twai_message_t twaiFrame;
-    bool result {false};
-    if(twai_receive(&twaiFrame, pdMS_TO_TICKS(timeoutINms)) == ESP_OK)
+    bool result{false};
+    if (twai_receive(&twaiFrame, pdMS_TO_TICKS(timeoutINms)) == ESP_OK)
     {
         frame.extd = twaiFrame.extd;
         frame.ss = frame.extd;
         frame.identifier = twaiFrame.identifier;
         frame.data_length_code = twaiFrame.data_length_code;
-        #if TWAI_FRAME_MAX_DLC > 8
+#if TWAI_FRAME_MAX_DLC > 8
         memcpy(&frame.data[0], &twaiFrame.data[0], 8);
-        #else
+#else
         memcpy(&frame.data[0], &twaiFrame.data[0], TWAI_FRAME_MAX_DLC);
-        #endif
-        //std::copy(std::begin(twaiFrame.data), std::end(twaiFrame.data), std::begin(frame.data));
+#endif
+        // std::copy(std::begin(twaiFrame.data), std::end(twaiFrame.data), std::begin(frame.data));
         result = true;
     }
     return result;

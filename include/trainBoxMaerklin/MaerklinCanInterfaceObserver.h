@@ -2,7 +2,7 @@
  * TrainBox Maerklin Esp32
  *
  * Copyright (C) 2022 Marcel Maage
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -24,16 +24,13 @@
 
 //#define CAN_DEBUG
 
-
 class MaerklinCanInterfaceObserver : public MaerklinCanInterface, public Observer
 {
-    public:
-
-
-	/**
-	 * Creates a new TrackController with the given hash and debugging
-	 * flag. A zero hash will result in a unique hash begin generated.
-	 */
+public:
+    /**
+     * Creates a new TrackController with the given hash and debugging
+     * flag. A zero hash will result in a unique hash begin generated.
+     */
     MaerklinCanInterfaceObserver(word hash, bool debug);
 
     /**
@@ -76,10 +73,10 @@ class MaerklinCanInterfaceObserver : public MaerklinCanInterface, public Observe
 
     void cyclic();
 
-    void update(Observable& observable, void* data);
+    void update(Observable &observable, void *data);
 
     void errorHandling();
-    
-    private:
-        std::shared_ptr<CanInterface> m_canInterface;
+
+private:
+    std::shared_ptr<CanInterface> m_canInterface;
 };

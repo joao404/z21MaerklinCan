@@ -6,6 +6,8 @@
 #include <string>
 #include <memory>
 
+//#define DEBUG
+
 // class is designed as a singelton
 class WebService
 {
@@ -46,7 +48,6 @@ private:
     AutoConnectCheckbox m_defaultLocoCs2;
     AutoConnectCheckbox m_progActive;
     AutoConnectCheckbox m_readingLoco;
-    AutoConnectFile m_uploadFile;
     AutoConnectSubmit m_saveButton;
     AutoConnectSubmit m_getZ21DbButton;
 
@@ -54,4 +55,10 @@ private:
     AutoConnectText m_readingStatus;
     AutoConnectText m_locoNames;
     AutoConnectSubmit m_reloadButton;
+
+    AutoConnectAux m_auxZ60Upload;
+    AutoConnectFile m_uploadFile;
+    AutoConnectSubmit m_uploadButton;
+
+    AutoConnectAux m_auxZ60UploadStatus;
 };

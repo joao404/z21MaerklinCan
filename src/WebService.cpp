@@ -1,4 +1,5 @@
 #include "WebService.h"
+#include <map>
 
 WebService *WebService::m_instance{nullptr};
 
@@ -10,12 +11,15 @@ WebService::WebService()
       m_progActive("progActive", "progActive", "Trackprogramming activ", false),
       m_readingLoco("readingLoco", "readingLoco", "Read locos from Mobile Station", false),
       m_saveButton("saveButton", "Run", "/z60configstatus"),
-      m_uploadFile("uploadFile", "uploadFile", "Select file:"),
       m_getZ21DbButton("getZ21DbButton", "Download Z21 Database", "/z21.html"),
       m_auxZ60ConfigStatus("/z60configstatus", "Z60 Config Status"),
       m_readingStatus("readingStatus", "readingStatus", "Reading locos: %s"),
       m_locoNames("locoNames", "locoNames", "%s"),
-      m_reloadButton("realoadButton", "Reload", "/z60configstatus")
+      m_reloadButton("realoadButton", "Reload", "/z60configstatus"),
+      m_auxZ60Upload("/upload", "Z60 File Upload"),
+      m_uploadFile("uploadFile", "uploadFile", "Select file:"),
+      m_uploadButton("uploadButton", "Upload", "/uploadstatus"),
+      m_auxZ60UploadStatus("/uploadstatus", "Z60 Upload Status")
 {
     m_WebServer.on("/can", [this]()
                    {
@@ -197,13 +201,19 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
 
     m_AutoConnect.onNotFound(WebService::handleNotFound);
 
-    m_auxZ60Config.add({m_deleteLocoConfig, m_defaultLocoCs2, m_progActive, m_readingLoco, m_uploadFile, m_saveButton, m_getZ21DbButton});
+    m_auxZ60Config.add({m_deleteLocoConfig, m_defaultLocoCs2, m_progActive, m_readingLoco, m_saveButton, m_getZ21DbButton});
     m_auxZ60ConfigStatus.add({m_readingStatus, m_locoNames, m_reloadButton, m_getZ21DbButton});
 
     m_AutoConnect.join(m_auxZ60Config);
     m_AutoConnect.join(m_auxZ60ConfigStatus);
 
-    m_auxZ60ConfigStatus.on(WebService::postUpload);
+    m_auxZ60Upload.add({m_uploadFile, m_uploadButton});
+    m_auxZ60UploadStatus.add({m_readingStatus, m_locoNames, m_getZ21DbButton});
+
+    m_AutoConnect.join(m_auxZ60Upload);
+    m_AutoConnect.join(m_auxZ60UploadStatus);
+
+    m_auxZ60UploadStatus.on(WebService::postUpload);
 
     // m_AutoConnect.append("/z21.html", "z21DB");
 
@@ -256,6 +266,22 @@ void WebService::handleNotFound(void)
             m_instance->m_WebServer.send(404, "text/plain", "png not available");
         }
     }
+    else if (filePath.endsWith(".png"))
+    {
+        // send default picture if no picture is available
+        const char *requestedFile{"/default.png"};
+        if (SPIFFS.exists(requestedFile))
+        {
+            File uploadedFile = SPIFFS.open(requestedFile, "r");
+            String mime = m_instance->getContentType(requestedFile);
+            m_instance->m_WebServer.streamFile(uploadedFile, mime);
+            uploadedFile.close();
+        }
+        else
+        {
+            m_instance->m_WebServer.send(404, "text/plain", (filePath + " not available").c_str());
+        }
+    }
     else
     {
         String message = "File Not Found\n";
@@ -270,15 +296,17 @@ void WebService::handleNotFound(void)
         {
             message += " " + m_instance->m_WebServer.argName(i) + ": " + m_instance->m_WebServer.arg(i) + "\n";
         }
+#ifdef DEBUG
         Serial.print(message);
+#endif
         m_instance->m_WebServer.send(404, "text/plain", message);
     }
 }
 
 String WebService::postUpload(AutoConnectAux &aux, PageArgument &args)
 {
-    String result{"Uploaded" +  m_instance->m_uploadFile.value};
-    AutoConnectFile &upload {m_instance->m_uploadFile};
+    String result{"Uploaded" + m_instance->m_uploadFile.value};
+    AutoConnectFile &upload{m_instance->m_uploadFile};
     Serial.printf("Uploaded: %s\n", upload.value.c_str());
     if (SPIFFS.exists(String("/" + upload.value).c_str()))
     {
@@ -298,77 +326,31 @@ String WebService::postUpload(AutoConnectAux &aux, PageArgument &args)
 
 String WebService::getContentType(const String &filename)
 {
-    if (filename.endsWith(".cs2"))
+    const static std::map<const String, const String> contentTypes{
+        {".cs2", "text/plain"},
+        {".txt", "text/plain"},
+        {".htm", "text/html"},
+        {".html", "text/html"},
+        {".css", "text/css"},
+        {".js", "application/javascript"},
+        {".json", "application/json"},
+        {".png", "image/png"},
+        {".gif", "image/gif"},
+        {".jpg", "image/jpeg"},
+        {".jpeg", "image/jpeg"},
+        {".ico", "image/x-icon"},
+        {".svg", "image/svg+xml"},
+        {".xml", "text/xml"},
+        {".pdf", "application/x-pdf"},
+        {".zip", "application/x-zip"},
+        {".gz", "application/x-gzip"},
+        {".z21", "application/octet-stream"}};
+    for (auto iter = contentTypes.begin(); iter != contentTypes.end(); ++iter)
     {
-        return "text/plain";
-    }
-    else if (filename.endsWith(".txt"))
-    {
-        return "text/plain";
-    }
-    else if (filename.endsWith(".htm"))
-    {
-        return "text/html";
-    }
-    else if (filename.endsWith(".html"))
-    {
-        return "text/html";
-    }
-    else if (filename.endsWith(".css"))
-    {
-        return "text/css";
-    }
-    else if (filename.endsWith(".js"))
-    {
-        return "application/javascript";
-    }
-    else if (filename.endsWith(".json"))
-    {
-        return "application/json";
-    }
-    else if (filename.endsWith(".png"))
-    {
-        return "image/png";
-    }
-    else if (filename.endsWith(".gif"))
-    {
-        return "image/gif";
-    }
-    else if (filename.endsWith(".jpg"))
-    {
-        return "image/jpeg";
-    }
-    else if (filename.endsWith(".jpeg"))
-    {
-        return "image/jpeg";
-    }
-    else if (filename.endsWith(".ico"))
-    {
-        return "image/x-icon";
-    }
-    else if (filename.endsWith(".svg"))
-    {
-        return "image/svg+xml";
-    }
-    else if (filename.endsWith(".xml"))
-    {
-        return "text/xml";
-    }
-    else if (filename.endsWith(".pdf"))
-    {
-        return "application/x-pdf";
-    }
-    else if (filename.endsWith(".zip"))
-    {
-        return "application/x-zip";
-    }
-    else if (filename.endsWith(".gz"))
-    {
-        return "application/x-gzip";
-    }
-    else if (filename.endsWith(".z21"))
-    {
-        return "application/octet-stream";
+        if (filename.endsWith(iter->first))
+        {
+            return iter->second;
+        }
     }
     return "text/plain";
 }
