@@ -16,9 +16,9 @@
 
 #include "z60.h"
 
-z60::z60(uint16_t hash, uint32_t serialNumber, HwType hwType, uint32_t swVersion, int16_t port, bool debugZ60, bool debugZ21, bool debugTrainbox)
+z60::z60(uint16_t hash, uint32_t serialNumber, HwType hwType, uint32_t swVersion, bool debugZ60, bool debugZ21, bool debugTrainbox)
     : MaerklinCanInterfaceObserver(hash, debugTrainbox),
-      z21InterfaceEsp32(hwType, swVersion, port, debugZ21),
+      z21InterfaceObserver(hwType, swVersion, debugZ21),
       m_serialNumber(serialNumber),
       m_programmingActiv(false),
       m_directProgramming(false),
@@ -74,7 +74,7 @@ void z60::begin()
   }
 
   MaerklinCanInterfaceObserver::begin();
-  z21InterfaceEsp32::begin();
+  z21InterfaceObserver::begin();
 
   delay(1000);
   // check for train box or mobile station
@@ -89,7 +89,7 @@ void z60::begin()
   }
 
   // Disable track voltage
-  // z21InterfaceEsp32::setPower(EnergyState::csTrackVoltageOff);
+  // z21InterfaceObserver::setPower(EnergyState::csTrackVoltageOff);
   // MaerklinCanInterfaceEsp32::sendSystemStop();
 
   if (m_trainboxIdList.size() > 0)
@@ -98,11 +98,6 @@ void z60::begin()
   }
   // sendSystemStatus(static_cast<uint8_t>(valueChannel::voltage), m_trainBoxUid); // voltage
   // sendSystemStatus(static_cast<uint8_t>(valueChannel::temp), m_trainBoxUid);    // temp
-}
-
-void z60::cyclic()
-{
-  z21InterfaceEsp32::cyclic();
 }
 
 void z60::saveLocoConfig()
@@ -290,6 +285,12 @@ uint16_t z60::getSerialNumber()
 void z60::setLocoManagment(MaerklinConfigDataStream *configDataStream)
 {
   m_configDataStream = configDataStream;
+}
+
+void z60::update(Observable &observable, void *data)
+{
+  MaerklinCanInterfaceObserver::update(observable, data);
+  z21InterfaceObserver::update(observable, data);
 }
 
 // onCallback
@@ -937,7 +938,7 @@ void z60::notifyz21InterfaceRailPower(EnergyState State)
   {
     MaerklinCanInterfaceObserver::sendSystemStop(0); // trainBoxUid);
   }
-  z21InterfaceEsp32::setPower(State);
+  z21InterfaceObserver::setPower(State);
 }
 
 //--------------------------------------------------------------------------------------------

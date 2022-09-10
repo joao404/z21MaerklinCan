@@ -24,7 +24,10 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
-CanInterfaceEsp32::CanInterfaceEsp32()
+CanInterfaceEsp32::CanInterfaceEsp32(twai_timing_config_t timingConfig, gpio_num_t txPin, gpio_num_t rxPin)
+: m_timingConfig(timingConfig),
+m_txPin(txPin),
+m_rxPin(rxPin)
 {
 }
 
@@ -36,10 +39,10 @@ void CanInterfaceEsp32::begin()
 {
     Serial.println(F("Setting up TWAI..."));
     /* set TWAI pins and baudrate */
-    twai_general_config_t general_config = {
+    twai_general_config_t generalConfig = {
         .mode = TWAI_MODE_NORMAL,
-        .tx_io = (gpio_num_t)GPIO_NUM_4, // 11,//5,
-        .rx_io = (gpio_num_t)GPIO_NUM_5, // 10,//4,
+        .tx_io = m_txPin, // 11,//5,
+        .rx_io = m_rxPin, // 10,//4,
         .clkout_io = (gpio_num_t)TWAI_IO_UNUSED,
         .bus_off_io = (gpio_num_t)TWAI_IO_UNUSED,
         .tx_queue_len = 120,
@@ -47,11 +50,10 @@ void CanInterfaceEsp32::begin()
         .alerts_enabled = TWAI_ALERT_ABOVE_ERR_WARN | TWAI_ALERT_ERR_PASS | TWAI_ALERT_BUS_OFF | TWAI_ALERT_BUS_RECOVERED |
                           TWAI_ALERT_RX_QUEUE_FULL | TWAI_ALERT_BUS_ERROR, // TWAI_ALERT_NONE,
         .clkout_divider = 0};
-    twai_timing_config_t timing_config = TWAI_TIMING_CONFIG_250KBITS();
-    twai_filter_config_t filter_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+    twai_filter_config_t filterConfig = TWAI_FILTER_CONFIG_ACCEPT_ALL();
     esp_err_t error;
 
-    error = twai_driver_install(&general_config, &timing_config, &filter_config);
+    error = twai_driver_install(&generalConfig, &m_timingConfig, &filterConfig);
     if (error == ESP_OK)
     {
         Serial.println(F("TWAI Driver installation success..."));

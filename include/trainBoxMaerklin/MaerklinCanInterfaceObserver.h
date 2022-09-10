@@ -71,9 +71,7 @@ public:
      */
     bool receiveMessage(TrackMessage &message) override;
 
-    void cyclic();
-
-    void update(Observable &observable, void *data);
+    virtual void update(Observable &observable, void *data) override;
 
     void errorHandling();
 

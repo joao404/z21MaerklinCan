@@ -1,5 +1,5 @@
 /*********************************************************************
- * CanInterfaceEsp32
+ * UdpInterface
  *
  * Copyright (C) 2022 Marcel Maage
  *
@@ -16,27 +16,23 @@
 
 #pragma once
 
-#include "trainBoxMaerklin/CanInterface.h"
-#include <driver/twai.h>
+#include "Helper/Observer.h"
 
-class CanInterfaceEsp32 : public CanInterface
+class UdpInterface : public Observable
 {
 public:
-    CanInterfaceEsp32(twai_timing_config_t timingConfig, gpio_num_t txPin, gpio_num_t rxPin);
-    virtual ~CanInterfaceEsp32();
+    typedef struct {
+        uint8_t client;
+        uint8_t *data;
+    } UdpMessage;
 
-    void begin() override;
 
-    void cyclic();
+    UdpInterface(){};
+    virtual ~UdpInterface(){};
 
-    bool transmit(CanMessage &frame, uint16_t timeoutINms) override;
+    virtual void begin() = 0;
 
-    bool receive(CanMessage &frame, uint16_t timeoutINms) override;
+    virtual bool transmit(UdpMessage &message) = 0;
 
-private:
-    twai_timing_config_t m_timingConfig;
-    gpio_num_t m_txPin;
-    gpio_num_t m_rxPin;
-
-    void errorHandling();
+    virtual bool receive(UdpMessage &message) = 0;
 };

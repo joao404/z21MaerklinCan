@@ -23,6 +23,7 @@
 #include "WebService.h"
 #include "trainBoxMaerklin/CanInterfaceEsp32.h"
 #include "trainBoxMaerklin/MaerklinLocoManagment.h"
+#include "z21/UdpInterfaceEsp32.h"
 #include "z60.h"
 #include "Can2Lan.h"
 #include "Cs2DataParser.h"
@@ -30,13 +31,17 @@
 #include <SPIFFS.h>
 #include <sqlite3.h>
 
-std::shared_ptr<CanInterfaceEsp32> canInterface = std::make_shared<CanInterfaceEsp32>();
+twai_timing_config_t timingConfig = TWAI_TIMING_CONFIG_250KBITS();
+std::shared_ptr<CanInterfaceEsp32> canInterface = std::make_shared<CanInterfaceEsp32>(timingConfig, GPIO_NUM_4, GPIO_NUM_5);
 
 const uint16_t hash{0};
 const uint32_t serialNumber{0xFFFFFFF0};
 const uint16_t swVersion{0x0142};
 const int16_t z21Port{21105};
-z60 centralStation(hash, serialNumber, z21Interface::HwType::Z21_XL, swVersion, z21Port, true, false, false);
+
+std::shared_ptr<UdpInterfaceEsp32> udpInterface = std::make_shared<UdpInterfaceEsp32>(30, z21Port, false);
+
+z60 centralStation(hash, serialNumber, z21Interface::HwType::Z21_XL, swVersion, true, false, false);
 
 Can2Lan *can2Lan;
 
@@ -268,7 +273,7 @@ void setup()
 
             for (auto iterator = locoData.functionData.begin(); iterator != locoData.functionData.end(); ++iterator)
             {
-              sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(" + std::to_string(functionId) + "," + std::to_string(locoId) + "," + std::to_string(iterator->buttonType) + ",'" + iterator->shortcut + "','0'," + std::to_string(iterator->function) + ",'"+ iterator->imageName  +"',"+ std::to_string(iterator->function) + ",1,0)";
+              sql = "insert into functions(id,vehicle_id,button_type,shortcut,time,position,image_name,function,show_function_number,is_configured) values(" + std::to_string(functionId) + "," + std::to_string(locoId) + "," + std::to_string(iterator->buttonType) + ",'" + iterator->shortcut + "','0'," + std::to_string(iterator->function) + ",'" + iterator->imageName + "'," + std::to_string(iterator->function) + ",1,0)";
               if (sqlite3_exec(z21Database, sql.c_str(), callback, (void *)data, &zErrMsg) != SQLITE_OK)
               {
                 Serial.printf("SQL error: %s | %s\n", zErrMsg, sql.c_str());
@@ -386,6 +391,16 @@ void setup()
     Serial.println("ERROR: No can interface defined");
   }
 
+  if (nullptr != udpInterface.get())
+  {
+    udpInterface->begin();
+  }
+
+  if (!centralStation.setUdpObserver(udpInterface))
+  {
+    Serial.println("ERROR: No udp interface defined");
+  }
+
   centralStation.setLocoManagment(&locoManagment);
 
   centralStation.begin();
@@ -408,7 +423,7 @@ void loop()
     webService->cyclic();
   }
   canInterface->cyclic();
-  centralStation.cyclic();
   locoManagment.cyclic();
-  //delayMicroseconds(1);
+  udpInterface->cyclic();
+  // delayMicroseconds(1);
 }

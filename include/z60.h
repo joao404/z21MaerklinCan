@@ -19,13 +19,13 @@
 #include "trainBoxMaerklin/MaerklinCanInterfaceObserver.h"
 #include "trainBoxMaerklin/MaerklinConfigDataStream.h"
 #include "trainBoxMaerklin/MaerklinStationConfig.h"
-#include "z21/z21InterfaceEsp32.h"
+#include "z21/z21InterfaceObserver.h"
 #include <unordered_map>
 #include <list>
 #include <vector>
 #include "Preferences.h"
 
-class z60 : public MaerklinCanInterfaceObserver, private z21InterfaceEsp32
+class z60 : public virtual MaerklinCanInterfaceObserver, public virtual z21InterfaceObserver
 {
 public:
     enum class AdrMode : uint8_t
@@ -53,10 +53,9 @@ public:
     };
 
 public:
-    z60(uint16_t hash, uint32_t serialNumber, HwType hwType, uint32_t swVersion, int16_t port, bool debugZ60, bool debugZ21, bool debugTrainbox);
+    z60(uint16_t hash, uint32_t serialNumber, HwType hwType, uint32_t swVersion, bool debugZ60, bool debugZ21, bool debugTrainbox);
     virtual ~z60();
     void begin();
-    void cyclic();
 
     void deleteLocoConfig();
 
@@ -67,6 +66,8 @@ public:
     void setLocoManagment(MaerklinConfigDataStream *configDataStream);
 
     std::vector<MaerklinStationConfig> &getStationList() { return m_stationList; }
+
+    void update(Observable &observable, void *data) override;
 
 private:
     // const uint32_t z21Uid{0xBADEAFFE};
