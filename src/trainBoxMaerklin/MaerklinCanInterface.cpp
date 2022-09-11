@@ -356,6 +356,9 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 			break;
 		}
 	}
+
+	// Maybe TODO
+	// commands where it response bit is not relevant
 	switch (static_cast<MaerklinCanInterface::Cmd>(message.command))
 	{
 	case MaerklinCanInterface::Cmd::systemCmd:
