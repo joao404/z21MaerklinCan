@@ -16,34 +16,34 @@
 
 #include "trainBoxMaerklin/MaerklinCanInterfaceObserver.h"
 
-MaerklinCanInterfaceObserver::MaerklinCanInterfaceObserver(word hash, bool debug)
+ZCanInterfaceObserver::ZCanInterfaceObserver(word hash, bool debug)
     : MaerklinCanInterface(hash, debug)
 {
 }
 
-MaerklinCanInterfaceObserver::~MaerklinCanInterfaceObserver()
+ZCanInterfaceObserver::~ZCanInterfaceObserver()
 {
   end();
 }
 
-bool MaerklinCanInterfaceObserver::setCanObserver(std::shared_ptr<CanInterface> canInterface)
+bool ZCanInterfaceObserver::setCanObserver(std::shared_ptr<CanInterface> canInterface)
 {
   m_canInterface = canInterface;
   return nullptr != m_canInterface;
 }
 
-void MaerklinCanInterfaceObserver::begin()
+void ZCanInterfaceObserver::begin()
 {
   m_canInterface->attach(*this);
 
   MaerklinCanInterface::begin();
 }
 
-void MaerklinCanInterfaceObserver::end()
+void ZCanInterfaceObserver::end()
 {
 }
 
-void MaerklinCanInterfaceObserver::update(Observable &observable, void *data)
+void ZCanInterfaceObserver::update(Observable &observable, void *data)
 {
   if (&observable == m_canInterface.get())
   {
@@ -73,7 +73,7 @@ void MaerklinCanInterfaceObserver::update(Observable &observable, void *data)
   }
 }
 
-bool MaerklinCanInterfaceObserver::sendMessage(TrackMessage &message)
+bool ZCanInterfaceObserver::sendMessage(TrackMessage &message)
 {
   CanInterface::CanMessage txFrame;
 
@@ -102,7 +102,7 @@ bool MaerklinCanInterfaceObserver::sendMessage(TrackMessage &message)
   return result;
 }
 
-bool MaerklinCanInterfaceObserver::receiveMessage(TrackMessage &message)
+bool ZCanInterfaceObserver::receiveMessage(TrackMessage &message)
 {
   CanInterface::CanMessage rxFrame;
 

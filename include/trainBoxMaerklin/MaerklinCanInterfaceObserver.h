@@ -24,20 +24,20 @@
 
 //#define CAN_DEBUG
 
-class MaerklinCanInterfaceObserver : public MaerklinCanInterface, public Observer
+class ZCanInterfaceObserver : public MaerklinCanInterface, public Observer
 {
 public:
     /**
      * Creates a new TrackController with the given hash and debugging
      * flag. A zero hash will result in a unique hash begin generated.
      */
-    MaerklinCanInterfaceObserver(word hash, bool debug);
+    ZCanInterfaceObserver(word hash, bool debug);
 
     /**
      * Is called when a TrackController is being destroyed. Does the
      * necessary cleanup. No need to call this manually.
      */
-    virtual ~MaerklinCanInterfaceObserver();
+    virtual ~ZCanInterfaceObserver();
 
     // set can observer for receiving and writing messages
     bool setCanObserver(std::shared_ptr<CanInterface> canInterface);
@@ -72,8 +72,6 @@ public:
     bool receiveMessage(TrackMessage &message) override;
 
     virtual void update(Observable &observable, void *data) override;
-
-    void errorHandling();
 
 private:
     std::shared_ptr<CanInterface> m_canInterface;

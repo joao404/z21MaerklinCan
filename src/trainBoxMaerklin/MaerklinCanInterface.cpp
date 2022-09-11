@@ -1085,10 +1085,7 @@ void TrackMessage::clear()
 	hash = 0;
 	response = false;
 	length = 0;
-	for (int i = 0; i < 8; i++)
-	{
-		data[i] = 0;
-	}
+	data.fill(0);
 }
 
 size_t TrackMessage::printTo(Print &p) const

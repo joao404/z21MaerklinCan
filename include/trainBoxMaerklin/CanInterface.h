@@ -23,18 +23,15 @@ class CanInterface : public Observable
 public:
     typedef struct
     {
-        union
+        struct
         {
-            struct
-            {
-                // The order of these bits must match deprecated message flags for compatibility reasons
-                uint32_t extd : 1;         /**< Extended Frame Format (29bit ID) */
-                uint32_t rtr : 1;          /**< Message is a Remote Frame */
-                uint32_t ss : 1;           /**< Transmit as a Single Shot Transmission. Unused for received. */
-                uint32_t self : 1;         /**< Transmit as a Self Reception Request. Unused for received. */
-                uint32_t dlc_non_comp : 1; /**< Message's Data length code is larger than 8. This will break compliance with ISO 11898-1 */
-                uint32_t reserved : 27;    /**< Reserved bits */
-            };
+            // The order of these bits must match deprecated message flags for compatibility reasons
+            uint32_t extd : 1;         /**< Extended Frame Format (29bit ID) */
+            uint32_t rtr : 1;          /**< Message is a Remote Frame */
+            uint32_t ss : 1;           /**< Transmit as a Single Shot Transmission. Unused for received. */
+            uint32_t self : 1;         /**< Transmit as a Self Reception Request. Unused for received. */
+            uint32_t dlc_non_comp : 1; /**< Message's Data length code is larger than 8. This will break compliance with ISO 11898-1 */
+            uint32_t reserved : 27;    /**< Reserved bits */
         };
         uint32_t identifier;         /**< 11 or 29 bit identifier */
         uint8_t data_length_code;    /**< Data length code */
