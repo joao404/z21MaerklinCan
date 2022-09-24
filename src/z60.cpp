@@ -17,7 +17,7 @@
 #include "z60.h"
 
 z60::z60(uint16_t hash, uint32_t serialNumber, HwType hwType, uint32_t swVersion, bool debugZ60, bool debugZ21, bool debugTrainbox)
-    : ZCanInterfaceObserver(hash, debugTrainbox),
+    : MaerklinCanInterfaceObserver(hash, debugTrainbox),
       z21InterfaceObserver(hwType, swVersion, debugZ21),
       m_serialNumber(serialNumber),
       m_programmingActiv(false),
@@ -73,7 +73,7 @@ void z60::begin()
     }
   }
 
-  ZCanInterfaceObserver::begin();
+  MaerklinCanInterfaceObserver::begin();
   z21InterfaceObserver::begin();
 
   delay(1000);
@@ -289,7 +289,7 @@ void z60::setLocoManagment(MaerklinConfigDataStream *configDataStream)
 
 void z60::update(Observable &observable, void *data)
 {
-  ZCanInterfaceObserver::update(observable, data);
+  MaerklinCanInterfaceObserver::update(observable, data);
   z21InterfaceObserver::update(observable, data);
 }
 
@@ -924,19 +924,19 @@ void z60::notifyz21InterfaceRailPower(EnergyState State)
 
   if (EnergyState::csNormal == State)
   {
-    ZCanInterfaceObserver::sendSystemGo(0); // trainBoxUid);
+    MaerklinCanInterfaceObserver::sendSystemGo(0); // trainBoxUid);
     // TrackMessage out, in;
     // messageSystemGo(out);
     // exchangeMessage(out, in, 1000)
   }
   else if (EnergyState::csEmergencyStop == State)
   {
-    ZCanInterfaceObserver::sendSystemHalt(0); // trainBoxUid);
+    MaerklinCanInterfaceObserver::sendSystemHalt(0); // trainBoxUid);
     // TrainBoxMaerklinEsp32::sendSystemStop();
   }
   else if (EnergyState::csTrackVoltageOff == State)
   {
-    ZCanInterfaceObserver::sendSystemStop(0); // trainBoxUid);
+    MaerklinCanInterfaceObserver::sendSystemStop(0); // trainBoxUid);
   }
   z21InterfaceObserver::setPower(State);
 }

@@ -25,7 +25,7 @@
 #include <vector>
 #include "Preferences.h"
 
-class z60 : public virtual ZCanInterfaceObserver, public virtual z21InterfaceObserver
+class z60 : public virtual MaerklinCanInterfaceObserver, public virtual z21InterfaceObserver
 {
 public:
     enum class AdrMode : uint8_t
