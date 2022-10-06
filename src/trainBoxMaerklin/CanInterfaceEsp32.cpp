@@ -80,7 +80,7 @@ void CanInterfaceEsp32::begin()
 void CanInterfaceEsp32::cyclic()
 {
     CanMessage frame;
-    while (receive(frame, 0) == ESP_OK)
+    while (receive(frame, 0))
     {
         notify(&frame);
     }
