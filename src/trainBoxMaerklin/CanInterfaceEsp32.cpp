@@ -79,8 +79,8 @@ void CanInterfaceEsp32::begin()
 
 void CanInterfaceEsp32::cyclic()
 {
-    twai_message_t frame;
-    while (twai_receive(&frame, 0) == ESP_OK)
+    CanMessage frame;
+    while (receive(frame, 0) == ESP_OK)
     {
         notify(&frame);
     }
