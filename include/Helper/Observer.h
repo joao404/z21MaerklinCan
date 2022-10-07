@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <Arduino.h>
+#include <algorithm>
 #include <vector>
 
 class Observable; 

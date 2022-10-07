@@ -110,7 +110,7 @@ bool MaerklinCanInterfaceObserver::receiveMessage(TrackMessage &message)
 
   if (nullptr != m_canInterface.get())
   {
-    (m_canInterface->receive(rxFrame, 200u) == ESP_OK);
+    result = m_canInterface->receive(rxFrame, 200u);
   }
 
   if (result)
