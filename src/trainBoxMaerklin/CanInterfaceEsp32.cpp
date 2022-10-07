@@ -116,7 +116,7 @@ bool CanInterfaceEsp32::receive(CanMessage &frame, uint16_t timeoutINms)
     if (twai_receive(&twaiFrame, pdMS_TO_TICKS(timeoutINms)) == ESP_OK)
     {
         frame.extd = twaiFrame.extd;
-        frame.ss = frame.extd;
+        frame.ss = twaiFrame.ss;
         frame.identifier = twaiFrame.identifier;
         frame.data_length_code = twaiFrame.data_length_code;
 #if TWAI_FRAME_MAX_DLC > 8
