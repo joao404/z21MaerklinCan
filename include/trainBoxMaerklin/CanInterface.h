@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Helper/Observer.h"
+#include <array>
 
 class CanInterface : public Observable
 {
