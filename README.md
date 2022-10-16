@@ -33,7 +33,7 @@ Note:
 - Start RemoteCS2/3 or z21 App. Connect to server under ip 192.168.0.111
 
 ## Loading locos from MS2
-- Go to webserver under 192.168.0.111
+- Go to webserver under 192.168.0.111 or gleisbox.local
 - Go to Home
 - mark checkbox for "Read locos from Mobile Station"
 - Click on Submit

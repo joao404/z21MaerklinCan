@@ -1,5 +1,6 @@
 #include "WebService.h"
 #include <map>
+#include <ESPmDNS.h>
 
 WebService *WebService::m_instance{nullptr};
 
@@ -218,6 +219,11 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
     // m_AutoConnect.append("/z21.html", "z21DB");
 
     m_AutoConnect.begin();
+
+    if (MDNS.begin("gleisbox")) {
+      MDNS.addService("http", "tcp", 80);
+    }
+
 }
 
 void WebService::setLokomotiveAvailable(bool isAvailable)
