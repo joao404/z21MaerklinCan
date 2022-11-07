@@ -57,6 +57,8 @@ public:
     virtual ~z60();
     void begin();
 
+    void cyclic();
+
     void deleteLocoConfig();
 
     void setProgramming(bool isActiv) { m_programmingActiv = isActiv; }
@@ -124,6 +126,10 @@ private:
     uint16_t m_voltageINmV{0};
     uint16_t m_tempIN10_2deg{0};
 
+    uint32_t m_lastProgrammingCmdSentTimeINms{0};
+
+    uint32_t m_timeoutProgrammingcmdSentTimeINms{2000};
+
     bool m_debug;
 
     void saveLocoConfig();
@@ -144,6 +150,8 @@ private:
     void setConfig2(std::array<uint8_t, 16> &config) override;
 
     uint16_t getSerialNumber() override;
+
+    void notifyProgrammingCmdSent() override;
 
     // onCallback
     bool onSystemStop(uint32_t id) override;

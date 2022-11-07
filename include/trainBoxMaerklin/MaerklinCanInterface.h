@@ -22,6 +22,7 @@
 #include <Printable.h>
 #include <String>
 #include <array>
+#include <queue>
 
 class TrackMessage : public Printable
 {
@@ -168,11 +169,22 @@ public:
         systemReset = 0x18
     };
 
-    enum class valueChannel : uint8_t
+    enum class ValueChannel : uint8_t
     {
         current = 1,
         voltage = 3,
         temp = 4
+    };
+
+    enum class ProgrammingProtocol : uint8_t
+    {
+        MfxProgramReLogin = 0,
+        MfxProgramDetection = 32,
+        Mm2_20Khz = 33,
+        Mm2_40Khz = 34,
+        DccShort = 35,
+        DccLong = 36,
+        MfxMainDetection = 64
     };
 
 protected:
@@ -183,6 +195,10 @@ protected:
     uint16_t m_hash;
 
     bool m_debug;
+
+    std::queue<TrackMessage> m_programmingCmdQueue;
+
+    bool m_programmingCmdActive;
 
     virtual void begin();
 
@@ -199,6 +215,10 @@ protected:
     virtual void end() = 0;
 
     void handleReceivedMessage(TrackMessage &message);
+
+    bool sendNextProgrammingCmd(bool deleteFirst = false);
+
+    virtual void notifyProgrammingCmdSent() {};
 
     // onCallback
     virtual bool onSystemStop(uint32_t id) { return false; }
@@ -230,6 +250,18 @@ protected:
     virtual bool onSystemIdent(uint32_t id, uint16_t feedbackId) { return false; }
 
     virtual bool onSystemReset(uint32_t id, uint8_t target) { return false; }
+
+    virtual bool onLocoDiscovery() { return false; }
+
+    virtual bool onLocoDiscovery(uint32_t uid, uint8_t protocol) { return false; }
+
+    virtual bool onLocoDiscovery(uint32_t uid, uint8_t protocol, uint8_t ask) { return false; }
+
+    virtual bool onMfxBind(uint32_t uid, uint16_t sid) { return false; }
+
+    virtual bool onMfxVerify(uint32_t uid, uint16_t sid) { return false; }
+
+    virtual bool onMfxVerify(uint32_t uid, uint16_t sid, uint8_t ask) { return false; }
 
     virtual bool onLocoSpeed(uint32_t id) { return false; }
 
@@ -294,6 +326,16 @@ public:
 
     void messageSystemReset(TrackMessage &message, uint8_t resetTarget, uint32_t uid = 0);
 
+    void messageLocoDiscovery(TrackMessage &message);
+
+    void messageLocoDiscovery(TrackMessage &message, ProgrammingProtocol protocol);
+
+    void messageLocoDiscovery(TrackMessage &message, uint32_t uid, ProgrammingProtocol protocol);
+
+    void messageMfxBind(TrackMessage &message, uint32_t uid, uint8_t sid);
+
+    void messageMfxVerify(TrackMessage &message, uint32_t uid, uint8_t sid);
+
     void messageLocoSpeed(TrackMessage &message, uint32_t uid);
 
     void messageLocoSpeed(TrackMessage &message, uint32_t uid, uint16_t speed);
@@ -352,6 +394,16 @@ public:
     bool sendSetSystemIdent(uint16_t systemIdent, uint32_t uid = 0);
 
     bool sendSystemReset(uint8_t resetTarget, uint32_t uid = 0);
+
+    bool requestLocoDiscovery();
+
+    bool requestLocoDiscovery(ProgrammingProtocol protocol);
+
+    bool requestLocoDiscovery(uint32_t uid, ProgrammingProtocol protocol);
+
+    bool bindMfxUid(uint32_t uid, uint16_t sid);
+
+    bool verifyMfxUid(uint32_t uid, uint16_t sid);
 
     bool requestLocoSpeed(uint32_t uid);
 

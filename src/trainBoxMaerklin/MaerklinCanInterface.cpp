@@ -249,6 +249,107 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 				break;
 			}
 			break;
+		case MaerklinCanInterface::Cmd::locoDetection:
+			if (0 == message.length)
+			{
+				if (!m_programmingCmdQueue.empty())
+				{
+					auto activeCmd = m_programmingCmdQueue.front();
+					if (message.command == activeCmd.command)
+					{
+						m_programmingCmdQueue.pop();
+						m_programmingCmdActive = false;
+						sendNextProgrammingCmd();
+					}
+				}
+				messageHandled = onLocoDiscovery();
+			}
+			else if (5 == message.length)
+			{
+				if (!m_programmingCmdQueue.empty())
+				{
+					auto activeCmd = m_programmingCmdQueue.front();
+					if (message.command == activeCmd.command)
+					{
+						m_programmingCmdQueue.pop();
+						m_programmingCmdActive = false;
+						sendNextProgrammingCmd();
+					}
+				}
+				uint32_t id = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
+				messageHandled = onLocoDiscovery(id, message.data[4]);
+			}
+			else if (6 == message.length)
+			{
+				if (!m_programmingCmdQueue.empty())
+				{
+					auto activeCmd = m_programmingCmdQueue.front();
+					if (message.command == activeCmd.command)
+					{
+						m_programmingCmdQueue.pop();
+						m_programmingCmdActive = false;
+						sendNextProgrammingCmd();
+					}
+				}
+				uint32_t id = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
+				uint8_t protocol = message.data[4];
+				uint8_t ask = message.data[5];
+				messageHandled = onLocoDiscovery(id, protocol, ask);
+			}
+			break;
+		case MaerklinCanInterface::Cmd::mfxBind:
+			if (6 == message.length)
+			{
+				if (!m_programmingCmdQueue.empty())
+				{
+					auto activeCmd = m_programmingCmdQueue.front();
+					if (message.command == activeCmd.command)
+					{
+						m_programmingCmdQueue.pop();
+						m_programmingCmdActive = false;
+						sendNextProgrammingCmd();
+					}
+				}
+				uint32_t uid = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
+				uint16_t sid = (message.data[4] << 8) + message.data[5];
+				messageHandled = onMfxBind(uid, sid);
+			}
+			break;
+		case MaerklinCanInterface::Cmd::mfxVerify:
+			if (6 == message.length)
+			{
+				if (!m_programmingCmdQueue.empty())
+				{
+					auto activeCmd = m_programmingCmdQueue.front();
+					if (message.command == activeCmd.command)
+					{
+						m_programmingCmdQueue.pop();
+						m_programmingCmdActive = false;
+						sendNextProgrammingCmd();
+					}
+				}
+				uint32_t uid = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
+				uint16_t sid = (message.data[4] << 8) + message.data[5];
+				messageHandled = onMfxVerify(uid, sid);
+			}
+			else if (7 == message.length)
+			{
+				if (!m_programmingCmdQueue.empty())
+				{
+					auto activeCmd = m_programmingCmdQueue.front();
+					if (message.command == activeCmd.command)
+					{
+						m_programmingCmdQueue.pop();
+						m_programmingCmdActive = false;
+						sendNextProgrammingCmd();
+					}
+				}
+				uint32_t uid = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
+				uint16_t sid = (message.data[4] << 8) + message.data[5];
+				uint8_t ask = message.data[6];
+				messageHandled = onMfxVerify(uid, sid, ask);
+			}
+			break;
 		case MaerklinCanInterface::Cmd::locoSpeed:
 			if (4 == message.length) // locomotive is not known
 			{
@@ -433,6 +534,24 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 	if (messageHandled)
 	{
 	}
+}
+
+bool MaerklinCanInterface::sendNextProgrammingCmd(bool deleteFirst)
+{
+	bool result{false};
+	if (!m_programmingCmdQueue.empty())
+	{
+		if (deleteFirst)
+		{
+			m_programmingCmdQueue.pop();
+		}
+		if (!m_programmingCmdQueue.empty())
+		{
+			notifyProgrammingCmdSent();
+			result = sendMessage(m_programmingCmdQueue.front());
+		}
+	}
+	return result;
 }
 
 void MaerklinCanInterface::messageSystemStop(TrackMessage &message, uint32_t uid)
@@ -635,6 +754,64 @@ void MaerklinCanInterface::messageSystemReset(TrackMessage &message, uint8_t res
 // ===================================================================
 // === LocoCmd =======================================================
 // ===================================================================
+
+void MaerklinCanInterface::messageLocoDiscovery(TrackMessage &message)
+{
+	message.clear();
+	message.prio = static_cast<uint8_t>(MessagePrio::noPrio);
+	message.command = static_cast<uint8_t>(MaerklinCanInterface::Cmd::locoDetection);
+	message.length = 0x0;
+}
+
+void MaerklinCanInterface::messageLocoDiscovery(TrackMessage &message, ProgrammingProtocol protocol)
+{
+	message.clear();
+	message.prio = static_cast<uint8_t>(MessagePrio::noPrio);
+	message.command = static_cast<uint8_t>(MaerklinCanInterface::Cmd::locoDetection);
+	message.length = 0x1;
+	message.data[0] = static_cast<uint8_t>(protocol);
+}
+
+void MaerklinCanInterface::messageLocoDiscovery(TrackMessage &message, uint32_t uid, ProgrammingProtocol protocol)
+{
+	message.clear();
+	message.prio = static_cast<uint8_t>(MessagePrio::noPrio);
+	message.command = static_cast<uint8_t>(MaerklinCanInterface::Cmd::locoDetection);
+	message.length = 0x5;
+	message.data[0] = 0xFF & (uid >> 24);
+	message.data[1] = 0xFF & (uid >> 16);
+	message.data[2] = 0xFF & (uid >> 8);
+	message.data[3] = 0xFF & uid;
+	message.data[4] = static_cast<uint8_t>(protocol);
+}
+
+void MaerklinCanInterface::messageMfxBind(TrackMessage &message, uint32_t uid, uint8_t sid)
+{
+	message.clear();
+	message.prio = static_cast<uint8_t>(MessagePrio::noPrio);
+	message.command = static_cast<uint8_t>(MaerklinCanInterface::Cmd::mfxBind);
+	message.length = 0x6;
+	message.data[0] = 0xFF & (uid >> 24);
+	message.data[1] = 0xFF & (uid >> 16);
+	message.data[2] = 0xFF & (uid >> 8);
+	message.data[3] = 0xFF & uid;
+	message.data[4] = 0xFF & (sid >> 8);
+	message.data[5] = 0xFF & sid;
+}
+
+void MaerklinCanInterface::messageMfxVerify(TrackMessage &message, uint32_t uid, uint8_t sid)
+{
+	message.clear();
+	message.prio = static_cast<uint8_t>(MessagePrio::noPrio);
+	message.command = static_cast<uint8_t>(MaerklinCanInterface::Cmd::mfxVerify);
+	message.length = 0x6;
+	message.data[0] = 0xFF & (uid >> 24);
+	message.data[1] = 0xFF & (uid >> 16);
+	message.data[2] = 0xFF & (uid >> 8);
+	message.data[3] = 0xFF & uid;
+	message.data[4] = 0xFF & (sid >> 8);
+	message.data[5] = 0xFF & sid;
+}
 
 void MaerklinCanInterface::messageLocoSpeed(TrackMessage &message, uint32_t uid)
 {
@@ -929,6 +1106,76 @@ bool MaerklinCanInterface::sendSystemReset(uint8_t resetTarget, uint32_t uid)
 // ===================================================================
 // === LocoCmd =======================================================
 // ===================================================================
+
+bool MaerklinCanInterface::requestLocoDiscovery()
+{
+	bool result{true};
+	TrackMessage message;
+	messageLocoDiscovery(message);
+	m_programmingCmdQueue.push(message);
+	if (!m_programmingCmdActive)
+	{
+		m_programmingCmdActive = true;
+		result = sendNextProgrammingCmd();
+	}
+	return result;
+}
+
+bool MaerklinCanInterface::requestLocoDiscovery(ProgrammingProtocol protocol)
+{
+	bool result{true};
+	TrackMessage message;
+	messageLocoDiscovery(message, protocol);
+	m_programmingCmdQueue.push(message);
+	if (!m_programmingCmdActive)
+	{
+		m_programmingCmdActive = true;
+		result = sendNextProgrammingCmd();
+	}
+	return result;
+}
+
+bool MaerklinCanInterface::requestLocoDiscovery(uint32_t uid, ProgrammingProtocol protocol)
+{
+	bool result{true};
+	TrackMessage message;
+	messageLocoDiscovery(message, uid, protocol);
+	m_programmingCmdQueue.push(message);
+	if (!m_programmingCmdActive)
+	{
+		m_programmingCmdActive = true;
+		result = sendNextProgrammingCmd();
+	}
+	return result;
+}
+
+bool MaerklinCanInterface::bindMfxUid(uint32_t uid, uint16_t sid)
+{
+	bool result{true};
+	TrackMessage message;
+	messageMfxBind(message, uid, sid);
+	m_programmingCmdQueue.push(message);
+	if (!m_programmingCmdActive)
+	{
+		m_programmingCmdActive = true;
+		result = sendNextProgrammingCmd();
+	}
+	return result;
+}
+
+bool MaerklinCanInterface::verifyMfxUid(uint32_t uid, uint16_t sid)
+{
+	bool result{true};
+	TrackMessage message;
+	messageMfxVerify(message, uid, sid);
+	m_programmingCmdQueue.push(message);
+	if (!m_programmingCmdActive)
+	{
+		m_programmingCmdActive = true;
+		result = sendNextProgrammingCmd();
+	}
+	return result;
+}
 
 bool MaerklinCanInterface::requestLocoSpeed(uint32_t uid)
 {

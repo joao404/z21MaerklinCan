@@ -94,10 +94,24 @@ void z60::begin()
 
   if (m_trainboxIdList.size() > 0)
   {
-    sendSystemStatus(static_cast<uint8_t>(valueChannel::current), m_trainboxIdList.at(0)); // current
+    sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
   }
   // sendSystemStatus(static_cast<uint8_t>(valueChannel::voltage), m_trainBoxUid); // voltage
   // sendSystemStatus(static_cast<uint8_t>(valueChannel::temp), m_trainBoxUid);    // temp
+}
+
+void z60::cyclic()
+{
+  uint32_t currentTimeINms = millis();
+  if (m_programmingCmdActive)
+  {
+    if ((currentTimeINms + m_timeoutProgrammingcmdSentTimeINms) > m_lastProgrammingCmdSentTimeINms)
+    {
+      // timeout for programming command
+      // send next command
+      sendNextProgrammingCmd(true);
+    }
+  }
 }
 
 void z60::saveLocoConfig()
@@ -282,6 +296,11 @@ uint16_t z60::getSerialNumber()
   return m_serialNumber;
 }
 
+void z60::notifyProgrammingCmdSent()
+{
+  m_lastProgrammingCmdSentTimeINms = millis();
+}
+
 void z60::setLocoManagment(MaerklinConfigDataStream *configDataStream)
 {
   m_configDataStream = configDataStream;
@@ -300,7 +319,6 @@ bool z60::onSystemStop(uint32_t id)
   uint8_t data[16];
   data[0] = static_cast<uint8_t>(z21Interface::XHeader::LAN_X_BC_TRACK_POWER);
   data[1] = 0x00; // Power OFF
-  // EthSend(0, 0x07, z21Interface::Header::LAN_X_HEADER, data, true, 0);
   EthSend(0, 0x07, z21Interface::Header::LAN_X_HEADER, data, true, (static_cast<uint16_t>(BcFlagShort::Z21bcAll) | static_cast<uint16_t>(BcFlagShort::Z21bcNetAll)));
   // data[0] = static_cast<uint8_t>(z21Interface::XHeader::LAN_X_GET_SETTING);
   // data[1] = 0x80; // Power OFF
@@ -314,7 +332,6 @@ bool z60::onSystemGo(uint32_t id)
   uint8_t data[16]; // z21Interface send storage
   data[0] = static_cast<uint8_t>(z21Interface::XHeader::LAN_X_BC_TRACK_POWER);
   data[1] = 0x01;
-  // EthSend(0x00, 0x07, z21Interface::Header::LAN_X_HEADER, data, true, 0);
   EthSend(0x00, 0x07, z21Interface::Header::LAN_X_HEADER, data, true, (static_cast<uint16_t>(BcFlagShort::Z21bcAll) | static_cast<uint16_t>(BcFlagShort::Z21bcNetAll)));
   // data[0] = static_cast<uint8_t>(z21Interface::XHeader::LAN_X_GET_SETTING);
   // data[1] = 0x81; // Power ON
@@ -408,17 +425,17 @@ bool z60::onSystemStatus(uint32_t id, uint8_t channel, uint16_t value)
   Serial.print(" : ");
   Serial.println(value);
 
-  if (static_cast<uint8_t>(valueChannel::current) == channel)
+  if (static_cast<uint8_t>(ValueChannel::current) == channel)
   {
     m_currentINmA = (value - 0x0F) * 10;
-    sendSystemStatus(static_cast<uint8_t>(valueChannel::voltage), id); // voltage
+    sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), id); // voltage
   }
-  else if (static_cast<uint8_t>(valueChannel::voltage) == channel)
+  else if (static_cast<uint8_t>(ValueChannel::voltage) == channel)
   {
     m_voltageINmV = value * 10;
-    sendSystemStatus(static_cast<uint8_t>(valueChannel::temp), id); // temp
+    sendSystemStatus(static_cast<uint8_t>(ValueChannel::temp), id); // temp
   }
-  else if (static_cast<uint8_t>(valueChannel::temp) == channel)
+  else if (static_cast<uint8_t>(ValueChannel::temp) == channel)
   {
     m_tempIN10_2deg = value;
     sendSystemInfo(0, m_currentINmA, m_voltageINmV, m_tempIN10_2deg); // report System State to z21Interface clients
@@ -1370,7 +1387,7 @@ void z60::notifyz21InterfacegetSystemInfo(uint8_t client)
 
   if (m_trainboxIdList.size() > 0)
   {
-    sendSystemStatus(static_cast<uint8_t>(valueChannel::current), m_trainboxIdList.at(0)); // current
+    sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
   }
   else
   {
