@@ -94,10 +94,12 @@ void z60::begin()
 
   if (m_trainboxIdList.size() > 0)
   {
-    sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
+    sendSetTrackProtocol(7, m_trainboxIdList.at(0));
+    sendSetMfxCounter(0, m_trainboxIdList.at(0));
+    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
+    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), m_trainboxIdList.at(0)); // voltage
+    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::temp), m_trainboxIdList.at(0));    // temp
   }
-  // sendSystemStatus(static_cast<uint8_t>(valueChannel::voltage), m_trainBoxUid); // voltage
-  // sendSystemStatus(static_cast<uint8_t>(valueChannel::temp), m_trainBoxUid);    // temp
 }
 
 void z60::cyclic()
@@ -105,11 +107,38 @@ void z60::cyclic()
   uint32_t currentTimeINms = millis();
   if (m_programmingCmdActive)
   {
-    if ((currentTimeINms + m_timeoutProgrammingcmdSentTimeINms) > m_lastProgrammingCmdSentTimeINms)
+    if (!m_programmingCmdQueue.empty())
     {
-      // timeout for programming command
-      // send next command
-      sendNextProgrammingCmd(true);
+      if ((m_lastProgrammingCmdSentTimeINms + m_programmingCmdQueue.front().timeoutINms) < currentTimeINms)
+      {
+        // timeout for programming command
+        // send next command
+        Serial.println("Timeout ProgrammingCmd");
+        sendNextProgrammingCmd(true);
+        // m_lastProgrammingCmdSentTimeINms = millis();
+      }
+    }
+  }
+  // if(MfxDetectionState::Idle == m_mfxDetectionState)
+  // {
+  //   requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
+  //   m_mfxDetectionState = MfxDetectionState::Detection;
+  // }
+  if (Serial.available())
+  {
+    char zeichen = Serial.read();
+
+    if ('a' == zeichen)
+    {
+      requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
+    }
+    else if ('b' == zeichen)
+    {
+      verifyMfxUid(0x44abc, 5);
+    }
+    else if ('c' == zeichen)
+    {
+      bindMfxUid(0x44abc, 5);
     }
   }
 }
@@ -415,6 +444,10 @@ bool z60::onSystemOverLoad(uint32_t id, uint8_t channel)
 
 bool z60::onSystemStatus(uint32_t id, uint8_t channel, bool valid)
 {
+  Serial.print("onSystemStatus C ");
+  Serial.print(channel);
+  Serial.print(" : ");
+  Serial.println(valid);
   return false;
 }
 
@@ -423,17 +456,17 @@ bool z60::onSystemStatus(uint32_t id, uint8_t channel, uint16_t value)
   Serial.print("C ");
   Serial.print(channel);
   Serial.print(" : ");
-  Serial.println(value);
+  Serial.printf("%d\n", value);
 
   if (static_cast<uint8_t>(ValueChannel::current) == channel)
   {
     m_currentINmA = (value - 0x0F) * 10;
-    sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), id); // voltage
+    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), id); // voltage
   }
   else if (static_cast<uint8_t>(ValueChannel::voltage) == channel)
   {
     m_voltageINmV = value * 10;
-    sendSystemStatus(static_cast<uint8_t>(ValueChannel::temp), id); // temp
+    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::temp), id); // temp
   }
   else if (static_cast<uint8_t>(ValueChannel::temp) == channel)
   {
@@ -453,6 +486,108 @@ bool z60::onSystemReset(uint32_t id, uint8_t target)
   Serial.println("onSystemReset");
   return true;
 }
+///////////////////////////
+
+bool z60::onLocoDiscovery()
+{
+  Serial.printf("onLocoDiscovery");
+  // requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
+  return false;
+}
+
+bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol)
+{
+  Serial.printf("Found 0x%X after %d\n", uid, millis() - m_locoDiscoveryStartINms);
+  // if (0 != uid)
+  // {
+  //   auto found = m_mfxLocoData.find(uid);
+  //   if (found != m_mfxLocoData.end())
+  //   {
+  //     verifyMfxUid(found->first, found->second);
+  //   }
+  //   else
+  //   {
+  //     verifyMfxUid(uid, 5);
+  //   }
+  // }
+  return true;
+}
+
+bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol, uint8_t ask)
+{
+  Serial.printf("Found 0x%X after %d with %d\n", uid, millis() - m_locoDiscoveryStartINms, ask);
+  // if (0 != uid)
+  // {
+  //   auto found = m_mfxLocoData.find(uid);
+  //   if (found != m_mfxLocoData.end())
+  //   {
+  //     verifyMfxUid(found->first, found->second);
+  //   }
+  //   else
+  //   {
+  //     verifyMfxUid(uid, 5);
+  //   }
+  // }
+  return true;
+}
+
+bool z60::onMfxBind(uint32_t uid, uint16_t sid)
+{
+  Serial.printf("Bound %X with %X\n", uid, sid);
+  // auto found = m_mfxLocoData.find(uid);
+  // if (found == m_mfxLocoData.end())
+  // {
+  //   m_mfxLocoData.emplace(uid, sid);
+  // }
+  // m_locoDiscoveryStartINms = millis();
+  // requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
+  return true;
+}
+
+bool z60::onMfxVerify(uint32_t uid, uint16_t sid)
+{
+  Serial.printf("Verified %X with %X\n", uid, sid);
+  // if (0 != sid)
+  // {
+  //   auto found = m_mfxLocoData.find(uid);
+  //   if (found == m_mfxLocoData.end())
+  //   {
+  //     bindMfxUid(found->first, found->second);
+  //     m_locoDiscoveryStartINms = millis();
+  //     requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
+  //   }
+  // }
+  // else
+  // {
+  //   // add element to map
+  //   // m_mfxLocoData.emplace(uid)
+  //   bindMfxUid(uid, 5);
+  // }
+  return true;
+}
+
+bool z60::onMfxVerify(uint32_t uid, uint16_t sid, uint8_t ask)
+{
+  Serial.printf("Verified %X with %X and %d\n", uid, sid, ask);
+  // if (0 != sid)
+  // {
+  //   auto found = m_mfxLocoData.find(uid);
+  //   if (found == m_mfxLocoData.end())
+  //   {
+  //     bindMfxUid(found->first, found->second);
+  //     m_locoDiscoveryStartINms = millis();
+  //     requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
+  //   }
+  // }
+  // else
+  // {
+  //   // add element to map
+  //   // m_mfxLocoData.emplace(uid)
+  //   bindMfxUid(uid, 5);
+  // }
+  return true;
+}
+
 ///////////////////////////
 bool z60::onLocoSpeed(uint32_t id)
 {
@@ -1388,6 +1523,8 @@ void z60::notifyz21InterfacegetSystemInfo(uint8_t client)
   if (m_trainboxIdList.size() > 0)
   {
     sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
+    sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), m_trainboxIdList.at(0)); // voltage
+    sendSystemStatus(static_cast<uint8_t>(ValueChannel::temp), m_trainboxIdList.at(0));    // temp
   }
   else
   {

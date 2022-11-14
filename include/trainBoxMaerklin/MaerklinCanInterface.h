@@ -184,8 +184,14 @@ public:
         Mm2_40Khz = 34,
         DccShort = 35,
         DccLong = 36,
-        MfxMainDetection = 64
+        MfxMainDetection = 96
     };
+
+    typedef struct
+    {
+        TrackMessage message;
+        uint32_t timeoutINms;
+    } ProgrammingCmd;
 
 protected:
     MaerklinCanInterface(word hash, bool debug);
@@ -196,7 +202,7 @@ protected:
 
     bool m_debug;
 
-    std::queue<TrackMessage> m_programmingCmdQueue;
+    std::queue<ProgrammingCmd> m_programmingCmdQueue;
 
     bool m_programmingCmdActive;
 
@@ -213,6 +219,8 @@ protected:
     virtual bool receiveMessage(TrackMessage &message) = 0;
 
     virtual void end() = 0;
+
+    bool queueProgrammingCmd(ProgrammingCmd& cmd);
 
     void handleReceivedMessage(TrackMessage &message);
 

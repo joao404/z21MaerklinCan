@@ -425,5 +425,6 @@ void loop()
   canInterface->cyclic();
   locoManagment.cyclic();
   udpInterface->cyclic();
+  centralStation.cyclic();
   // delayMicroseconds(1);
 }

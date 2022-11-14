@@ -156,6 +156,18 @@ bool MaerklinCanInterface::exchangeMessage(TrackMessage &out, TrackMessage &in, 
 	return false;
 }
 
+bool MaerklinCanInterface::queueProgrammingCmd(ProgrammingCmd& cmd)
+{
+	bool result {true};
+	m_programmingCmdQueue.push(cmd);
+	if (!m_programmingCmdActive)
+	{
+		m_programmingCmdActive = true;
+		result = sendNextProgrammingCmd();
+	}
+	return result;
+}
+
 void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 {
 	// Serial.print("==> ");
@@ -215,6 +227,16 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 				}
 				break;
 			case MaerklinCanInterface::SubCmd::systemStatus:
+				if (!m_programmingCmdQueue.empty())
+				{
+					auto activeCmd = m_programmingCmdQueue.front();
+					if (message.command == activeCmd.message.command)
+					{
+						m_programmingCmdQueue.pop();
+						m_programmingCmdActive = false;
+						sendNextProgrammingCmd();
+					}
+				}
 				if (7 == message.length)
 				{
 					uint32_t id = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
@@ -250,47 +272,27 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 			}
 			break;
 		case MaerklinCanInterface::Cmd::locoDetection:
+			if (!m_programmingCmdQueue.empty())
+			{
+				auto activeCmd = m_programmingCmdQueue.front();
+				if (message.command == activeCmd.message.command)
+				{
+					m_programmingCmdQueue.pop();
+					m_programmingCmdActive = false;
+					sendNextProgrammingCmd();
+				}
+			}
 			if (0 == message.length)
 			{
-				if (!m_programmingCmdQueue.empty())
-				{
-					auto activeCmd = m_programmingCmdQueue.front();
-					if (message.command == activeCmd.command)
-					{
-						m_programmingCmdQueue.pop();
-						m_programmingCmdActive = false;
-						sendNextProgrammingCmd();
-					}
-				}
 				messageHandled = onLocoDiscovery();
 			}
 			else if (5 == message.length)
 			{
-				if (!m_programmingCmdQueue.empty())
-				{
-					auto activeCmd = m_programmingCmdQueue.front();
-					if (message.command == activeCmd.command)
-					{
-						m_programmingCmdQueue.pop();
-						m_programmingCmdActive = false;
-						sendNextProgrammingCmd();
-					}
-				}
 				uint32_t id = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
 				messageHandled = onLocoDiscovery(id, message.data[4]);
 			}
 			else if (6 == message.length)
 			{
-				if (!m_programmingCmdQueue.empty())
-				{
-					auto activeCmd = m_programmingCmdQueue.front();
-					if (message.command == activeCmd.command)
-					{
-						m_programmingCmdQueue.pop();
-						m_programmingCmdActive = false;
-						sendNextProgrammingCmd();
-					}
-				}
 				uint32_t id = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
 				uint8_t protocol = message.data[4];
 				uint8_t ask = message.data[5];
@@ -298,52 +300,42 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 			}
 			break;
 		case MaerklinCanInterface::Cmd::mfxBind:
+			if (!m_programmingCmdQueue.empty())
+			{
+				auto activeCmd = m_programmingCmdQueue.front();
+				if (message.command == activeCmd.message.command)
+				{
+					m_programmingCmdQueue.pop();
+					m_programmingCmdActive = false;
+					sendNextProgrammingCmd();
+				}
+			}
 			if (6 == message.length)
 			{
-				if (!m_programmingCmdQueue.empty())
-				{
-					auto activeCmd = m_programmingCmdQueue.front();
-					if (message.command == activeCmd.command)
-					{
-						m_programmingCmdQueue.pop();
-						m_programmingCmdActive = false;
-						sendNextProgrammingCmd();
-					}
-				}
 				uint32_t uid = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
 				uint16_t sid = (message.data[4] << 8) + message.data[5];
 				messageHandled = onMfxBind(uid, sid);
 			}
 			break;
 		case MaerklinCanInterface::Cmd::mfxVerify:
+			if (!m_programmingCmdQueue.empty())
+			{
+				auto activeCmd = m_programmingCmdQueue.front();
+				if (message.command == activeCmd.message.command)
+				{
+					m_programmingCmdQueue.pop();
+					m_programmingCmdActive = false;
+					sendNextProgrammingCmd();
+				}
+			}
 			if (6 == message.length)
 			{
-				if (!m_programmingCmdQueue.empty())
-				{
-					auto activeCmd = m_programmingCmdQueue.front();
-					if (message.command == activeCmd.command)
-					{
-						m_programmingCmdQueue.pop();
-						m_programmingCmdActive = false;
-						sendNextProgrammingCmd();
-					}
-				}
 				uint32_t uid = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
 				uint16_t sid = (message.data[4] << 8) + message.data[5];
 				messageHandled = onMfxVerify(uid, sid);
 			}
 			else if (7 == message.length)
 			{
-				if (!m_programmingCmdQueue.empty())
-				{
-					auto activeCmd = m_programmingCmdQueue.front();
-					if (message.command == activeCmd.command)
-					{
-						m_programmingCmdQueue.pop();
-						m_programmingCmdActive = false;
-						sendNextProgrammingCmd();
-					}
-				}
 				uint32_t uid = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
 				uint16_t sid = (message.data[4] << 8) + message.data[5];
 				uint8_t ask = message.data[6];
@@ -381,6 +373,16 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 			}
 			break;
 		case MaerklinCanInterface::Cmd::readConfig:
+			if (!m_programmingCmdQueue.empty())
+			{
+				auto activeCmd = m_programmingCmdQueue.front();
+				if (message.command == activeCmd.message.command)
+				{
+					m_programmingCmdQueue.pop();
+					m_programmingCmdActive = false;
+					sendNextProgrammingCmd();
+				}
+			}
 			if (7 == message.length)
 			{
 				uint32_t id = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
@@ -397,6 +399,16 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 			}
 			break;
 		case MaerklinCanInterface::Cmd::writeConfig:
+			if (!m_programmingCmdQueue.empty())
+			{
+				auto activeCmd = m_programmingCmdQueue.front();
+				if (message.command == activeCmd.message.command)
+				{
+					m_programmingCmdQueue.pop();
+					m_programmingCmdActive = false;
+					sendNextProgrammingCmd();
+				}
+			}
 			if (8 == message.length)
 			{
 				uint32_t id = (message.data[0] << 24) + (message.data[1] << 16) + (message.data[2] << 8) + message.data[3];
@@ -434,6 +446,16 @@ void MaerklinCanInterface::handleReceivedMessage(TrackMessage &message)
 			}
 			break;
 		case MaerklinCanInterface::Cmd::statusDataConfig:
+			if (!m_programmingCmdQueue.empty())
+			{
+				auto activeCmd = m_programmingCmdQueue.front();
+				if (message.command == activeCmd.message.command)
+				{
+					m_programmingCmdQueue.pop();
+					m_programmingCmdActive = false;
+					sendNextProgrammingCmd();
+				}
+			}
 			if (8 == message.length)
 			{
 				std::array<uint8_t, 8> data{message.data[0], message.data[1], message.data[2], message.data[3], message.data[4], message.data[5], message.data[6], message.data[7]};
@@ -547,9 +569,14 @@ bool MaerklinCanInterface::sendNextProgrammingCmd(bool deleteFirst)
 		}
 		if (!m_programmingCmdQueue.empty())
 		{
+			sendMessage(m_programmingCmdQueue.front().message);
 			notifyProgrammingCmdSent();
-			result = sendMessage(m_programmingCmdQueue.front());
+			m_programmingCmdActive = true;
 		}
+	}
+	else
+	{
+		m_programmingCmdActive = false;
 	}
 	return result;
 }
@@ -1079,14 +1106,16 @@ bool MaerklinCanInterface::sendSystemStatus(uint8_t channelNumber, uint32_t uid)
 {
 	TrackMessage message;
 	messageSystemStatus(message, channelNumber, uid);
-	return sendMessage(message);
+	ProgrammingCmd cmd {message, 500};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::sendSystemStatus(uint8_t channelNumber, uint16_t configuration, uint32_t uid)
 {
 	TrackMessage message;
 	messageSystemStatus(message, channelNumber, configuration, uid);
-	return sendMessage(message);
+	ProgrammingCmd cmd {message, 500};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::sendSetSystemIdent(uint16_t systemIdent, uint32_t uid)
@@ -1109,72 +1138,42 @@ bool MaerklinCanInterface::sendSystemReset(uint8_t resetTarget, uint32_t uid)
 
 bool MaerklinCanInterface::requestLocoDiscovery()
 {
-	bool result{true};
 	TrackMessage message;
 	messageLocoDiscovery(message);
-	m_programmingCmdQueue.push(message);
-	if (!m_programmingCmdActive)
-	{
-		m_programmingCmdActive = true;
-		result = sendNextProgrammingCmd();
-	}
-	return result;
+	ProgrammingCmd cmd {message, 6000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::requestLocoDiscovery(ProgrammingProtocol protocol)
 {
-	bool result{true};
 	TrackMessage message;
 	messageLocoDiscovery(message, protocol);
-	m_programmingCmdQueue.push(message);
-	if (!m_programmingCmdActive)
-	{
-		m_programmingCmdActive = true;
-		result = sendNextProgrammingCmd();
-	}
-	return result;
+	ProgrammingCmd cmd {message, 6000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::requestLocoDiscovery(uint32_t uid, ProgrammingProtocol protocol)
 {
-	bool result{true};
 	TrackMessage message;
 	messageLocoDiscovery(message, uid, protocol);
-	m_programmingCmdQueue.push(message);
-	if (!m_programmingCmdActive)
-	{
-		m_programmingCmdActive = true;
-		result = sendNextProgrammingCmd();
-	}
-	return result;
+	ProgrammingCmd cmd {message, 6000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::bindMfxUid(uint32_t uid, uint16_t sid)
 {
-	bool result{true};
 	TrackMessage message;
 	messageMfxBind(message, uid, sid);
-	m_programmingCmdQueue.push(message);
-	if (!m_programmingCmdActive)
-	{
-		m_programmingCmdActive = true;
-		result = sendNextProgrammingCmd();
-	}
-	return result;
+	ProgrammingCmd cmd {message, 1000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::verifyMfxUid(uint32_t uid, uint16_t sid)
 {
-	bool result{true};
 	TrackMessage message;
 	messageMfxVerify(message, uid, sid);
-	m_programmingCmdQueue.push(message);
-	if (!m_programmingCmdActive)
-	{
-		m_programmingCmdActive = true;
-		result = sendNextProgrammingCmd();
-	}
-	return result;
+	ProgrammingCmd cmd {message, 1000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::requestLocoSpeed(uint32_t uid)
@@ -1223,14 +1222,16 @@ bool MaerklinCanInterface::sendReadConfig(uint32_t id, uint16_t cvAdr, uint8_t n
 {
 	TrackMessage message;
 	messageReadConfig(message, id, cvAdr, number);
-	return sendMessage(message);
+	ProgrammingCmd cmd {message, 1000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::sendWriteConfig(uint32_t id, uint16_t cvAdr, uint8_t value, bool directProc, bool writeByte)
 {
 	TrackMessage message;
 	messageWriteConfig(message, id, cvAdr, value, directProc, writeByte);
-	return sendMessage(message);
+	ProgrammingCmd cmd {message, 1000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::setAccSwitch(uint32_t uid, uint8_t position, uint8_t current)
@@ -1265,7 +1266,8 @@ bool MaerklinCanInterface::requestStatusDataConfig(uint32_t uid, uint8_t index)
 {
 	TrackMessage message;
 	messageStatusDataConfig(message, uid, index);
-	return sendMessage(message);
+	ProgrammingCmd cmd {message, 1000};
+	return queueProgrammingCmd(cmd);
 }
 
 bool MaerklinCanInterface::requestConfigData(std::array<uint8_t, 8> &request)

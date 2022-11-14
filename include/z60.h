@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <list>
 #include <vector>
+#include <map>
 #include "Preferences.h"
 
 class z60 : public virtual MaerklinCanInterfaceObserver, public virtual z21InterfaceObserver
@@ -102,6 +103,23 @@ private:
 
     std::list<DataLoco> m_locos;
 
+    // typedef struct
+    // {
+
+    // } MfxLocoData;
+
+    std::map<uint32_t, uint16_t> m_mfxLocoData;
+
+    enum class MfxDetectionState : uint8_t
+    {
+        Idle = 0,
+        Detection,
+        Verify,
+        Bind
+    };
+
+    MfxDetectionState m_mfxDetectionState {MfxDetectionState::Idle};
+
     const size_t m_maxNumberOfTurnout{1024};
 
     const uint16_t m_startAdressAccDCC{1000};
@@ -128,9 +146,9 @@ private:
 
     uint32_t m_lastProgrammingCmdSentTimeINms{0};
 
-    uint32_t m_timeoutProgrammingcmdSentTimeINms{2000};
-
     bool m_debug;
+
+    uint32_t m_locoDiscoveryStartINms{0};
 
     void saveLocoConfig();
 
@@ -183,6 +201,18 @@ private:
     bool onSystemIdent(uint32_t id, uint16_t feedbackId) override;
 
     bool onSystemReset(uint32_t id, uint8_t target) override;
+
+    bool onLocoDiscovery() override;
+
+    bool onLocoDiscovery(uint32_t uid, uint8_t protocol) override;
+
+    bool onLocoDiscovery(uint32_t uid, uint8_t protocol, uint8_t ask) override;
+
+    bool onMfxBind(uint32_t uid, uint16_t sid) override;
+
+    bool onMfxVerify(uint32_t uid, uint16_t sid) override;
+
+    bool onMfxVerify(uint32_t uid, uint16_t sid, uint8_t ask) override;
 
     bool onLocoSpeed(uint32_t id) override;
 
