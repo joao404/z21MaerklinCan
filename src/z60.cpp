@@ -94,7 +94,10 @@ void z60::begin()
 
   if (m_trainboxIdList.size() > 0)
   {
-    sendSetTrackProtocol(7, m_trainboxIdList.at(0));
+    if (m_stationList.empty())
+    {
+      sendSetTrackProtocol(5, m_trainboxIdList.at(0)); // no mfx
+    }
     sendSetMfxCounter(0, m_trainboxIdList.at(0));
     // sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
     // sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), m_trainboxIdList.at(0)); // voltage
@@ -107,16 +110,10 @@ void z60::cyclic()
   uint32_t currentTimeINms = millis();
   if (m_programmingCmdActive)
   {
-    if (!m_programmingCmdQueue.empty())
+    if ((m_lastProgrammingCmdSentTimeINms + m_currentProgrammingCmd.timeoutINms) < currentTimeINms)
     {
-      if ((m_lastProgrammingCmdSentTimeINms + m_programmingCmdQueue.front().timeoutINms) < currentTimeINms)
-      {
-        // timeout for programming command
-        // send next command
-        Serial.println("Timeout ProgrammingCmd");
-        sendNextProgrammingCmd(true);
-        // m_lastProgrammingCmdSentTimeINms = millis();
-      }
+      Serial.println("Timeout ProgrammingCmd");
+      sendNextProgrammingCmd();
     }
   }
   // if(MfxDetectionState::Idle == m_mfxDetectionState)
@@ -124,23 +121,26 @@ void z60::cyclic()
   //   requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
   //   m_mfxDetectionState = MfxDetectionState::Detection;
   // }
-  if (Serial.available())
-  {
-    char zeichen = Serial.read();
+  // if (Serial.available())
+  // {
+  //   char zeichen = Serial.read();
 
-    if ('a' == zeichen)
-    {
-      requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
-    }
-    else if ('b' == zeichen)
-    {
-      verifyMfxUid(0x44abc, 5);
-    }
-    else if ('c' == zeichen)
-    {
-      bindMfxUid(0x44abc, 5);
-    }
-  }
+  //   if ('a' == zeichen)
+  //   {
+  //     // requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
+  //     requestLocoDiscovery(ProgrammingProtocol::Mm2_20Khz);
+  //   }
+  //   else if ('b' == zeichen)
+  //   {
+  //     // verifyMfxUid(0x44abc, 5);
+  //     requestLocoDiscovery(ProgrammingProtocol::DccLong);
+  //   }
+  //   else if ('c' == zeichen)
+  //   {
+  //     // bindMfxUid(0x44abc, 5);
+  //     requestLocoDiscovery(ProgrammingProtocol::DccShort);
+  //   }
+  // }
 }
 
 void z60::saveLocoConfig()
@@ -341,6 +341,12 @@ void z60::update(Observable &observable, void *data)
   z21InterfaceObserver::update(observable, data);
 }
 
+void z60::searchLoco(ProgrammingProtocol protocol)
+{
+  m_foundLocoString = "Searching";
+  requestLocoDiscovery(protocol);
+}
+
 // onCallback
 bool z60::onSystemStop(uint32_t id)
 {
@@ -490,14 +496,17 @@ bool z60::onSystemReset(uint32_t id, uint8_t target)
 
 bool z60::onLocoDiscovery()
 {
-  Serial.printf("onLocoDiscovery");
+  Serial.printf("onLocoDiscovery\n");
+  m_foundLocoString = "Found Nothing";
   // requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
   return false;
 }
 
 bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol)
 {
-  Serial.printf("Found 0x%X after %d\n", uid, millis() - m_locoDiscoveryStartINms);
+  Serial.printf("Found 0x%X\n", uid);
+  m_foundLocoString = "Found ";
+  m_foundLocoString += std::to_string(uid);
   // if (0 != uid)
   // {
   //   auto found = m_mfxLocoData.find(uid);
@@ -515,7 +524,9 @@ bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol)
 
 bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol, uint8_t ask)
 {
-  Serial.printf("Found 0x%X after %d with %d\n", uid, millis() - m_locoDiscoveryStartINms, ask);
+  Serial.printf("Found 0x%X with %d\n", uid, ask);
+  m_foundLocoString = "Found ";
+  m_foundLocoString += std::to_string(uid);
   // if (0 != uid)
   // {
   //   auto found = m_mfxLocoData.find(uid);

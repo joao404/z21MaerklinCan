@@ -72,6 +72,10 @@ public:
 
     void update(Observable &observable, void *data) override;
 
+    void searchLoco(ProgrammingProtocol protocol);
+
+    std::string* getFoundLocoString(void){return &m_foundLocoString;};
+
 private:
     // const uint32_t z21Uid{0xBADEAFFE};
 
@@ -146,9 +150,9 @@ private:
 
     uint32_t m_lastProgrammingCmdSentTimeINms{0};
 
-    bool m_debug;
+    std::string m_foundLocoString;
 
-    uint32_t m_locoDiscoveryStartINms{0};
+    bool m_debug;
 
     void saveLocoConfig();
 

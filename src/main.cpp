@@ -378,7 +378,17 @@ void setup()
       }
     };
 
-    webService->begin(configAutoConnect, deleteLocoConfigFkt, defaultLocoListFkt, programmingFkt, readingFkt);
+    auto searchMotorolaFkt = []()
+    { centralStation.searchLoco(z60::ProgrammingProtocol::Mm2_20Khz); };
+
+    auto searchDccShortFkt = []()
+    { centralStation.searchLoco(z60::ProgrammingProtocol::DccShort); };
+
+    auto searchDccLongFkt = []()
+    { centralStation.searchLoco(z60::ProgrammingProtocol::DccLong); };
+
+    webService->begin(configAutoConnect, deleteLocoConfigFkt, defaultLocoListFkt, programmingFkt, readingFkt, searchMotorolaFkt,
+                      searchDccShortFkt, searchDccLongFkt, centralStation.getFoundLocoString());
   }
 
   if (nullptr != canInterface.get())

@@ -3,6 +3,7 @@
 #include <WebServer.h>
 #include <AutoConnect.h>
 #include <SPIFFS.h>
+#include <functional>
 #include <string>
 #include <memory>
 
@@ -17,7 +18,9 @@ public:
 
     void cyclic();
 
-    void begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoConfigFkt)(void), void (*defaultLocoListFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void));
+    void begin(AutoConnectConfig &autoConnectConfig, std::function<void(void)> deleteLocoConfigFkt, std::function<void(void)> defaultLocoListFkt,
+               std::function<void(bool)> programmingFkt, std::function<void(void)> readingFkt, std::function<void(void)> searchMotorolaFkt,
+               std::function<void(void)> searchDccShortFkt, std::function<void(void)> searchDccLongFkt, std::string* foundLocoString);
 
     void setLokomotiveAvailable(bool isAvailable);
     void setTransmissionFinished(bool hasFinished);
@@ -31,15 +34,21 @@ private:
     static String postUpload(AutoConnectAux &aux, PageArgument &args);
     String getContentType(const String &filename);
 
-    void (*m_deleteLocoConfigFkt)(void);
-    void (*m_defaultLocoListFkt)(void);
-    void (*m_programmingFkt)(bool);
-    void (*m_readingFkt)(void);
+    std::function<void(void)> m_deleteLocoConfigFkt;
+    std::function<void(void)> m_defaultLocoListFkt;
+    std::function<void(bool)> m_programmingFkt;
+    std::function<void(void)> m_readingFkt;
 
     bool m_lokomotiveAvailable{true};
     bool m_transmissionFinished{true};
 
     std::vector<std::string> *m_locoList{nullptr};
+
+    std::function<void(void)> m_searchMotorolaFkt;
+    std::function<void(void)> m_searchDccShortFkt;
+    std::function<void(void)> m_searchDccLongFkt;
+
+    std::string* m_foundLocoString{nullptr};
 
     WebServer m_WebServer;
     AutoConnect m_AutoConnect;
@@ -61,4 +70,11 @@ private:
     AutoConnectSubmit m_uploadButton;
 
     AutoConnectAux m_auxZ60UploadStatus;
+
+    AutoConnectAux m_auxLocoSearch;
+    AutoConnectCheckbox m_motorolaActive;
+    AutoConnectCheckbox m_dccShortActive;
+    AutoConnectCheckbox m_dccLongActive;
+    AutoConnectSubmit m_triggerLocoSearchButton;
+    AutoConnectText m_foundLoco;
 };

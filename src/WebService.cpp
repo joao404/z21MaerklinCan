@@ -6,21 +6,27 @@ WebService *WebService::m_instance{nullptr};
 
 WebService::WebService()
     : m_AutoConnect(m_WebServer),
-      m_auxZ60Config("/", "Z60 Config"),
+      m_auxZ60Config("/", "Config"),
       m_deleteLocoConfig("deleteLocoConfig", "deleteLocoConfig", "Delete internal memory for z21 loco config", false),
       m_defaultLocoCs2("defaultLocoCs2", "defaultLocoCs2", "Set lokomotive.cs2 back to default values", false),
       m_progActive("progActive", "progActive", "Trackprogramming activ", false),
       m_readingLoco("readingLoco", "readingLoco", "Read locos from Mobile Station", false),
       m_saveButton("saveButton", "Run", "/z60configstatus"),
       m_getZ21DbButton("getZ21DbButton", "Download Z21 Database", "/z21.html"),
-      m_auxZ60ConfigStatus("/z60configstatus", "Z60 Config Status"),
+      m_auxZ60ConfigStatus("/z60configstatus", "Config Status"),
       m_readingStatus("readingStatus", "readingStatus", "Reading locos: %s"),
       m_locoNames("locoNames", "locoNames", "%s"),
       m_reloadButton("realoadButton", "Reload", "/z60configstatus"),
-      m_auxZ60Upload("/upload", "Z60 File Upload"),
+      m_auxZ60Upload("/upload", "File Upload"),
       m_uploadFile("uploadFile", "uploadFile", "Select file:"),
       m_uploadButton("uploadButton", "Upload", "/uploadstatus"),
-      m_auxZ60UploadStatus("/uploadstatus", "Z60 Upload Status")
+      m_auxZ60UploadStatus("/uploadstatus", "Upload Status"),
+      m_auxLocoSearch("/locosearch", "Loco search"),
+      m_motorolaActive("searchMotorola", "searchMotorola", "Search for Motorola", false),
+      m_dccShortActive("searchDccShort", "searchDccShort", "Search for DCC short", false),
+      m_dccLongActive("searchDccLong", "searchDccLong", "Search for DCC long", false),
+      m_triggerLocoSearchButton("triggerSearchButton", "Start", "/locosearch"),
+      m_foundLoco("foundLoco", "foundLoco", "%s")
 {
     m_WebServer.on("/can", [this]()
                    {
@@ -133,7 +139,9 @@ void WebService::cyclic()
     m_AutoConnect.handleClient();
 }
 
-void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoConfigFkt)(void), void (*defaultLocoListFkt)(void), void (*programmingFkt)(bool), void (*readingFkt)(void))
+void WebService::begin(AutoConnectConfig &autoConnectConfig, std::function<void(void)> deleteLocoConfigFkt, std::function<void(void)> defaultLocoListFkt,
+                       std::function<void(bool)> programmingFkt, std::function<void(void)> readingFkt, std::function<void(void)> searchMotorolaFkt,
+                       std::function<void(void)> searchDccShortFkt, std::function<void(void)> searchDccLongFkt, std::string* foundLocoString)
 {
     m_programmingFkt = programmingFkt;
 
@@ -142,6 +150,14 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
     m_defaultLocoListFkt = defaultLocoListFkt;
 
     m_deleteLocoConfigFkt = deleteLocoConfigFkt;
+
+    m_searchMotorolaFkt = searchMotorolaFkt;
+
+    m_searchDccShortFkt = searchDccShortFkt;
+
+    m_searchDccLongFkt = searchDccLongFkt;
+
+    m_foundLocoString = foundLocoString;
 
     m_auxZ60ConfigStatus.on([this](AutoConnectAux &aux, PageArgument &arg)
                             {
@@ -218,12 +234,45 @@ void WebService::begin(AutoConnectConfig &autoConnectConfig, void (*deleteLocoCo
 
     // m_AutoConnect.append("/z21.html", "z21DB");
 
+    m_auxLocoSearch.add({m_motorolaActive, m_dccShortActive, m_dccLongActive, m_triggerLocoSearchButton, m_foundLoco});
+
+    m_AutoConnect.join(m_auxLocoSearch);
+
+    m_auxLocoSearch.on([this](AutoConnectAux &aux, PageArgument &arg)
+                       {
+                                    if (m_WebServer.hasArg("searchMotorola"))
+                                    {
+                                        Serial.println("search motorola");
+                                        m_searchMotorolaFkt();
+                                    }
+                                    else if (m_WebServer.hasArg("searchDccShort"))
+                                    {
+                                        Serial.println("search dcc short");
+                                        m_searchDccShortFkt();
+                                    }
+                                    else if (m_WebServer.hasArg("searchDccLong"))
+                                    {
+                                        Serial.println("search dcc long");
+                                        m_searchDccLongFkt();
+                                    }
+
+                            if(nullptr != m_foundLocoString)
+                            {
+                                aux["foundLoco"].value = m_foundLocoString->c_str();
+                            }
+                            else
+                            {
+                                aux["foundLoco"].value = "Nothing searched yet";
+                            }
+                            
+                            return String(); });
+
     m_AutoConnect.begin();
 
-    if (MDNS.begin("gleisbox")) {
-      MDNS.addService("http", "tcp", 80);
+    if (MDNS.begin("gleisbox"))
+    {
+        MDNS.addService("http", "tcp", 80);
     }
-
 }
 
 void WebService::setLokomotiveAvailable(bool isAvailable)

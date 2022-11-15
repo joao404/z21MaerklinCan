@@ -204,6 +204,8 @@ protected:
 
     std::queue<ProgrammingCmd> m_programmingCmdQueue;
 
+    ProgrammingCmd m_currentProgrammingCmd;
+
     bool m_programmingCmdActive;
 
     virtual void begin();
@@ -224,7 +226,7 @@ protected:
 
     void handleReceivedMessage(TrackMessage &message);
 
-    bool sendNextProgrammingCmd(bool deleteFirst = false);
+    bool sendNextProgrammingCmd();
 
     virtual void notifyProgrammingCmdSent() {};
 
