@@ -77,6 +77,8 @@ void z60::begin()
   z21InterfaceObserver::begin();
 
   delay(1000);
+  m_trainboxIdList.clear();
+  m_stationList.clear();
   // check for train box or mobile station
   for (uint8_t i = 0; i < 5; i++)
   {
@@ -92,17 +94,20 @@ void z60::begin()
   // z21InterfaceObserver::setPower(EnergyState::csTrackVoltageOff);
   // MaerklinCanInterfaceEsp32::sendSystemStop();
 
-  if (m_trainboxIdList.size() > 0)
-  {
-    if (m_stationList.empty())
-    {
-      sendSetTrackProtocol(5, m_trainboxIdList.at(0)); // no mfx
-    }
-    sendSetMfxCounter(0, m_trainboxIdList.at(0));
-    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
-    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), m_trainboxIdList.at(0)); // voltage
-    // sendSystemStatus(static_cast<uint8_t>(ValueChannel::temp), m_trainboxIdList.at(0));    // temp
-  }
+  // if (m_trainboxIdList.size() > 0)
+  // {
+  //   Serial.println("Found Trainbox");
+  //   if (0 == m_stationList.size())
+  //   {
+  //     sendSetTrackProtocol(5, m_trainboxIdList.at(0)); // no mfx
+  //     sendSetTrackProtocol(5, 0);                      // no mfx
+  //     Serial.println("No Mobile Station");
+  //   }
+  //   sendSetMfxCounter(0, m_trainboxIdList.at(0));
+  //   // sendSystemStatus(static_cast<uint8_t>(ValueChannel::current), m_trainboxIdList.at(0)); // current
+  //   // sendSystemStatus(static_cast<uint8_t>(ValueChannel::voltage), m_trainboxIdList.at(0)); // voltage
+  //   // sendSystemStatus(static_cast<uint8_t>(ValueChannel::temp), m_trainboxIdList.at(0));    // temp
+  // }
 }
 
 void z60::cyclic()
@@ -112,10 +117,14 @@ void z60::cyclic()
   {
     if ((m_lastProgrammingCmdSentTimeINms + m_currentProgrammingCmd.timeoutINms) < currentTimeINms)
     {
+      if(m_debug)
+      {
       Serial.println("Timeout ProgrammingCmd");
+      }
       sendNextProgrammingCmd();
     }
   }
+
   // if(MfxDetectionState::Idle == m_mfxDetectionState)
   // {
   //   requestLocoDiscovery(ProgrammingProtocol::MfxProgramDetection);
@@ -387,8 +396,11 @@ bool z60::onSystemHalt(uint32_t id)
 
 bool z60::onLocoStop(uint32_t id)
 {
+  if(m_debug)
+  {
   Serial.print("onLocoStop:");
   Serial.println(id, HEX);
+  }
   // uint8_t data[16]; // z21Interface send storage
   //  data[0] = static_cast<uint8_t>(z21Interface::XHeader::LAN_X_BC_TRACK_POWER);
   //  data[1] = 0x00;
@@ -477,7 +489,7 @@ bool z60::onSystemStatus(uint32_t id, uint8_t channel, uint16_t value)
   else if (static_cast<uint8_t>(ValueChannel::temp) == channel)
   {
     m_tempIN10_2deg = value;
-    sendSystemInfo(0, m_currentINmA, m_voltageINmV, m_tempIN10_2deg); // report System State to z21Interface clients
+    sendSystemInfo(0, m_currentINmA, m_voltageINmV, m_tempIN10_2deg / 10); // report System State to z21Interface clients
   }
   return true;
 }
@@ -505,8 +517,11 @@ bool z60::onLocoDiscovery()
 bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol)
 {
   Serial.printf("Found 0x%X\n", uid);
-  m_foundLocoString = "Found ";
-  m_foundLocoString += std::to_string(uid);
+  if (0xFFFF > uid)
+  {
+    m_foundLocoString = "Found ";
+    m_foundLocoString += std::to_string(uid);
+  }
   // if (0 != uid)
   // {
   //   auto found = m_mfxLocoData.find(uid);
@@ -525,8 +540,11 @@ bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol)
 bool z60::onLocoDiscovery(uint32_t uid, uint8_t protocol, uint8_t ask)
 {
   Serial.printf("Found 0x%X with %d\n", uid, ask);
-  m_foundLocoString = "Found ";
-  m_foundLocoString += std::to_string(uid);
+  if (0xFFFF > uid)
+  {
+    m_foundLocoString = "Found ";
+    m_foundLocoString += std::to_string(uid);
+  }
   // if (0 != uid)
   // {
   //   auto found = m_mfxLocoData.find(uid);
@@ -835,6 +853,11 @@ bool z60::onPing(uint16_t hash, uint32_t id, uint16_t swVersion, uint16_t hwIden
       Serial.print(hwIdent, HEX);
       Serial.print(" SW:");
       Serial.println(swVersion, HEX);
+      if (0 == m_stationList.size())
+      {
+        sendSetTrackProtocol(0b101, id); // no mfx
+        sendSetTrackProtocol(0b101, 0); // no mfx
+      }
     }
   }
   else if (0x0030 == (hwIdent & 0xFFF0))
@@ -963,7 +986,7 @@ void z60::addToLocoList(uint16_t adrZ21, uint8_t mode, uint8_t steps)
     else if (adrZ21 > m_startAdressMoto) // Motorola
     {
       // mode = 1 = Motorola
-      m_locos.push_front(DataLoco{adrZ21, fromZ21AdrToTrainboxAdr(adrZ21, static_cast<uint8_t>(AdrMode::Motorola)), static_cast<uint8_t>(AdrMode::Motorola), true, 0, true, {static_cast<uint8_t>(StepConfig::Step28), 0, 0, 0, 0, 0}});
+      m_locos.push_front(DataLoco{adrZ21, fromZ21AdrToTrainboxAdr(adrZ21, static_cast<uint8_t>(AdrMode::Motorola)), static_cast<uint8_t>(AdrMode::Motorola), true, 0, true, {static_cast<uint8_t>(StepConfig::Step128), 0, 0, 0, 0, 0}});
     }
     else // DCC 14 steps
     {

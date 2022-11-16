@@ -41,7 +41,7 @@ const int16_t z21Port{21105};
 
 std::shared_ptr<UdpInterfaceEsp32> udpInterface = std::make_shared<UdpInterfaceEsp32>(30, z21Port, false);
 
-z60 centralStation(hash, serialNumber, z21Interface::HwType::Z21_XL, swVersion, true, false, false);
+z60 centralStation(hash, serialNumber, z21Interface::HwType::Z21_XL, swVersion, false, false, false);
 
 Can2Lan *can2Lan;
 
