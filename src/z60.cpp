@@ -876,6 +876,11 @@ bool z60::onPing(uint16_t hash, uint32_t id, uint16_t swVersion, uint16_t hwIden
       Serial.print(hwIdent, HEX);
       Serial.print(" SW:");
       Serial.println(swVersion, HEX);
+      if (0 != m_trainboxIdList.size())
+      {
+        sendSetTrackProtocol(0b111, m_trainboxIdList.at(0)); // dcc, mfx, motorola
+        sendSetTrackProtocol(0b111, 0); // dcc, mfx, motorola
+      }
     }
   }
   return true;
