@@ -19,9 +19,9 @@
 #include "Helper/Observer.h"
 #include <array>
 
-class CanInterface : public Observable
+namespace Can
 {
-public:
+
     typedef struct
     {
         struct
@@ -37,14 +37,18 @@ public:
         uint32_t identifier;         /**< 11 or 29 bit identifier */
         uint8_t data_length_code;    /**< Data length code */
         std::array<uint8_t, 8> data; /**< Data bytes (not relevant in RTR frame) */
-    } CanMessage;
+    } Message;
+};
 
+class CanInterface : public Observable<Can::Message>
+{
+public:
     CanInterface(){};
     virtual ~CanInterface(){};
 
     virtual void begin() = 0;
 
-    virtual bool transmit(CanMessage &frame, uint16_t timeoutINms) = 0;
+    virtual bool transmit(Can::Message &frame, uint16_t timeoutINms) = 0;
 
-    virtual bool receive(CanMessage &frame, uint16_t timeoutINms) = 0;
+    virtual bool receive(Can::Message &frame, uint16_t timeoutINms) = 0;
 };

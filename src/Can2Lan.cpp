@@ -75,7 +75,7 @@ void Can2Lan::begin(std::shared_ptr<CanInterface> canInterface, bool debug, bool
     }
     m_canInterface->attach(*this);
     // send magic start frame
-    CanInterface::CanMessage frame;
+    Can::Message frame;
     frame.identifier = 0x360301UL;
     frame.extd = 1;
     frame.ss = 1;
@@ -93,13 +93,13 @@ void Can2Lan::begin(std::shared_ptr<CanInterface> canInterface, bool debug, bool
 }
 
 // handle CAN frame
-void Can2Lan::update(Observable &observable, void *data)
+void Can2Lan::update(Observable<Can::Message> &observable, Can::Message *data)
 {
     if (&observable == m_canInterface.get())
     {
         if (nullptr != data)
         {
-            CanInterface::CanMessage *frame = static_cast<CanInterface::CanMessage *>(data);
+            Can::Message *frame = data;
 
             uint8_t udpframe[16];
             memset(udpframe, 0, m_canFrameSize);
@@ -151,7 +151,7 @@ void Can2Lan::handleUdpPacket(uint8_t *udpFrame, size_t size)
     if (0 == (size % m_canFrameSize))
     {
         uint8_t numberOfMessages = size / m_canFrameSize;
-        CanInterface::CanMessage txFrame;
+        Can::Message txFrame;
         uint8_t *udpFramePtr = udpFrame;
         for (uint8_t index = 0; index < numberOfMessages;
              udpFramePtr = (udpFrame + (index * m_canFrameSize)), index++)
@@ -300,7 +300,7 @@ void Can2Lan::handleTcpPacket(void *arg, AsyncClient *client, void *data, size_t
         if (0 == (size % interface->m_canFrameSize))
         {
             uint8_t numberOfMessages = size / interface->m_canFrameSize;
-            CanInterface::CanMessage txFrame;
+            Can::Message txFrame;
             uint8_t *tcpFramePtr = tcpFrame;
             for (uint8_t index = 0; index < numberOfMessages; index++)
             {

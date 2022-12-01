@@ -17,13 +17,13 @@ void z21InterfaceObserver::begin()
   m_udpInterface->attach(*this);
 }
 
-void z21InterfaceObserver::update(Observable &observable, void *data)
+void z21InterfaceObserver::update(Observable<Udp::Message> &observable, Udp::Message *data)
 {
   if (&observable == m_udpInterface.get())
   {
     if (nullptr != data)
     {
-      UdpInterface::UdpMessage *message = static_cast<UdpInterface::UdpMessage *>(data);
+      Udp::Message *message = data;
       receive(message->client, message->data); // Auswertung
     }
   }
@@ -32,6 +32,6 @@ void z21InterfaceObserver::update(Observable &observable, void *data)
 //--------------------------------------------------------------------------------------------
 void z21InterfaceObserver::notifyz21InterfaceEthSend(uint8_t client, uint8_t *data)
 {
-  UdpInterface::UdpMessage message{client, data};
+  Udp::Message message{client, data};
   m_udpInterface->transmit(message);
 }

@@ -29,9 +29,9 @@ public:
 
     void cyclic();
 
-    bool transmit(CanMessage &frame, uint16_t timeoutINms) override;
+    bool transmit(Can::Message &frame, uint16_t timeoutINms) override;
 
-    bool receive(CanMessage &frame, uint16_t timeoutINms) override;
+    bool receive(Can::Message &frame, uint16_t timeoutINms) override;
 
 private:
     twai_timing_config_t m_timingConfig;

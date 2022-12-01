@@ -43,13 +43,13 @@ void MaerklinCanInterfaceObserver::end()
 {
 }
 
-void MaerklinCanInterfaceObserver::update(Observable &observable, void *data)
+void MaerklinCanInterfaceObserver::update(Observable<Can::Message> &observable, Can::Message *data)
 {
   if (&observable == m_canInterface.get())
   {
     if (nullptr != data)
     {
-      CanInterface::CanMessage *frame = static_cast<CanInterface::CanMessage *>(data);
+      Can::Message *frame = static_cast<Can::Message *>(data);
 
       TrackMessage message;
       message.clear();
@@ -75,7 +75,7 @@ void MaerklinCanInterfaceObserver::update(Observable &observable, void *data)
 
 bool MaerklinCanInterfaceObserver::sendMessage(TrackMessage &message)
 {
-  CanInterface::CanMessage txFrame;
+  Can::Message txFrame;
 
   message.hash = m_hash;
 
@@ -104,7 +104,7 @@ bool MaerklinCanInterfaceObserver::sendMessage(TrackMessage &message)
 
 bool MaerklinCanInterfaceObserver::receiveMessage(TrackMessage &message)
 {
-  CanInterface::CanMessage rxFrame;
+  Can::Message rxFrame;
 
   bool result{false};
 

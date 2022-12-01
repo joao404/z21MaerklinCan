@@ -40,9 +40,9 @@ public:
   void begin() override;
   void cyclic();
 
-  bool transmit(UdpMessage &message) override;
+  bool transmit(Udp::Message &message) override;
 
-  bool receive(UdpMessage &message) override;
+  bool receive(Udp::Message &message) override;
 
 protected:
   void handlePacket(uint8_t client, uint8_t *packet, size_t packetLength);

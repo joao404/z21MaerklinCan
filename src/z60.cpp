@@ -344,9 +344,13 @@ void z60::setLocoManagment(MaerklinConfigDataStream *configDataStream)
   m_configDataStream = configDataStream;
 }
 
-void z60::update(Observable &observable, void *data)
+void z60::update(Observable<Can::Message> &observable, Can::Message *data)
 {
   MaerklinCanInterfaceObserver::update(observable, data);
+}
+
+void z60::update(Observable<Udp::Message> &observable, Udp::Message *data)
+{
   z21InterfaceObserver::update(observable, data);
 }
 

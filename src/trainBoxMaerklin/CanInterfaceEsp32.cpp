@@ -79,7 +79,7 @@ void CanInterfaceEsp32::begin()
 
 void CanInterfaceEsp32::cyclic()
 {
-    CanMessage frame;
+    Can::Message frame;
     while (receive(frame, 0))
     {
         notify(&frame);
@@ -87,7 +87,7 @@ void CanInterfaceEsp32::cyclic()
     errorHandling();
 }
 
-bool CanInterfaceEsp32::transmit(CanMessage &frame, uint16_t timeoutINms)
+bool CanInterfaceEsp32::transmit(Can::Message &frame, uint16_t timeoutINms)
 {
     twai_message_t twaiFrame;
     twaiFrame.extd = frame.extd;
@@ -109,7 +109,7 @@ bool CanInterfaceEsp32::transmit(CanMessage &frame, uint16_t timeoutINms)
     return result;
 }
 
-bool CanInterfaceEsp32::receive(CanMessage &frame, uint16_t timeoutINms)
+bool CanInterfaceEsp32::receive(Can::Message &frame, uint16_t timeoutINms)
 {
     twai_message_t twaiFrame;
     bool result{false};

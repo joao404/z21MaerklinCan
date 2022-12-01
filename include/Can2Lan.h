@@ -28,7 +28,7 @@
 #include "Helper/Observer.h"
 
 // class is designed as singleton
-class Can2Lan : public Observer
+class Can2Lan : public Observer<Can::Message>
 {
 public:
     struct DataLoco
@@ -58,7 +58,7 @@ private:
 
     bool m_canDebug;
 
-    void update(Observable &observable, void *data);
+    void update(Observable<Can::Message> &observable, Can::Message *data);
 
     void handleUdpPacket(uint8_t *udpframe, size_t size);
 

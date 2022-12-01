@@ -24,7 +24,7 @@
 
 //#define CAN_DEBUG
 
-class MaerklinCanInterfaceObserver : public MaerklinCanInterface, public Observer
+class MaerklinCanInterfaceObserver : public MaerklinCanInterface, public Observer<Can::Message>
 {
 public:
     /**
@@ -71,7 +71,7 @@ public:
      */
     bool receiveMessage(TrackMessage &message) override;
 
-    virtual void update(Observable &observable, void *data) override;
+    virtual void update(Observable<Can::Message> &observable, Can::Message *data) override;
 
 private:
     std::shared_ptr<CanInterface> m_canInterface;

@@ -23,7 +23,7 @@
 #include "Helper/Observer.h"
 #include <memory>
 
-class z21InterfaceObserver:public z21Interface, public Observer
+class z21InterfaceObserver:public z21Interface, public Observer<Udp::Message>
 {
   public:
     z21InterfaceObserver(HwType hwType, uint32_t swVersion,  boolean debug);
@@ -35,7 +35,7 @@ class z21InterfaceObserver:public z21Interface, public Observer
     bool setUdpObserver(std::shared_ptr<UdpInterface> udpInterface);
 
 // calls receive function of z21Interface
-    virtual void update(Observable &observable, void *data) override;
+    virtual void update(Observable<Udp::Message> &observable, Udp::Message *data) override;
 
   protected:
 

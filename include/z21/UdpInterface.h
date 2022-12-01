@@ -18,21 +18,23 @@
 
 #include "Helper/Observer.h"
 
-class UdpInterface : public Observable
+namespace Udp
 {
-public:
     typedef struct {
         uint8_t client;
         uint8_t *data;
-    } UdpMessage;
+    } Message;
+};
 
-
+class UdpInterface : public Observable<Udp::Message>
+{
+public:
     UdpInterface(){};
     virtual ~UdpInterface(){};
 
     virtual void begin() = 0;
 
-    virtual bool transmit(UdpMessage &message) = 0;
+    virtual bool transmit(Udp::Message &message) = 0;
 
-    virtual bool receive(UdpMessage &message) = 0;
+    virtual bool receive(Udp::Message &message) = 0;
 };
