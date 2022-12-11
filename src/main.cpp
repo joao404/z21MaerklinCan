@@ -82,6 +82,7 @@ void setup()
   configAutoConnect.apid = "z60AP-" + idOfEsp;
   configAutoConnect.psk = idOfEsp + idOfEsp;
   configAutoConnect.apip = IPAddress(192, 168, 0, 111); // Sets SoftAP IP address
+  configAutoConnect.gateway = IPAddress(192, 168, 0, 111); // Sets Gateway IP address
   configAutoConnect.netmask = IPAddress(255, 255, 255, 0);
   configAutoConnect.channel = random(1, 12);
   Serial.printf("Wifi Channel:%d\n", configAutoConnect.channel);
