@@ -55,16 +55,15 @@ void UdpInterfaceEsp32::handlePacket(uint8_t client, uint8_t *packet, size_t pac
   {
     uint16_t index = 0;
     uint16_t length = 0;
-    for (size_t left_size = packetLength; left_size > 3;)
+    for (size_t left_size = packetLength; left_size > 3;left_size -= length, index += length)
     {
       length = (packet[index + 1] << 8) + packet[index];
-      if (left_size < length)
+      if ((left_size < length) || (0 == length))
       {
         break;
       }
       Udp::Message udpMessage{client, &(packet[index])};
       notify(&udpMessage);
-      left_size -= length;
     }
   }
 }
