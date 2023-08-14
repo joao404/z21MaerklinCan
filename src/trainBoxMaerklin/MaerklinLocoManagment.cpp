@@ -217,7 +217,7 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                         std::string locoName = data->substr(index, nameEnd - index);
                         if (!locoName.empty())
                         {
-                            m_locoList.emplace_back(locoName);
+                            m_locoList.emplace_back(move(locoName));
                         }
                         // Serial.print("Found loco:");
                         // Serial.print(m_locos->back()->name.c_str());
@@ -310,7 +310,7 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                     std::string::size_type pos = Cs2DataParser::getParameter(data, ".name=", locoName, 0);
                     if (std::string::npos != pos)
                     {
-                        m_locoList.emplace_back(locoName);
+                        m_locoList.emplace_back(move(locoName));
                     }
                     // get second loco if diff is high enough
                     if (m_locoList.size() < m_numberOfLoco)
@@ -318,7 +318,7 @@ void MaerklinLocoManagment::handleConfigDataStreamFeedback(std::string *data, ui
                         pos = Cs2DataParser::getParameter(data, ".name=", locoName, 0);
                         if (std::string::npos != pos)
                         {
-                            m_locoList.emplace_back(locoName);
+                            m_locoList.emplace_back(move(locoName));
                         }
                     }
                     // check if all locos where received

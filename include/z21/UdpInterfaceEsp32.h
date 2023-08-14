@@ -17,7 +17,6 @@
 #pragma once
 
 #include <Arduino.h>
-// #include <WiFiUDP.h>
 #include <AsyncUDP.h>
 #include "z21/UdpInterface.h"
 #include <memory>
@@ -44,6 +43,8 @@ public:
 
   bool receive(Udp::Message &message) override;
 
+  void activateStationBroadcast();
+
 protected:
   void handlePacket(uint8_t client, uint8_t *packet, size_t packetLength);
 
@@ -54,6 +55,8 @@ private:
   std::unique_ptr<listofIP[]> m_mem;
   uint16_t m_maxNumberOfClients;
   byte m_countIP; // zähler für Eintragungen
+
+  bool stationBroadcastActive{false};
 
   // will store last time of IP decount updated
   unsigned long m_IPpreviousMillis;

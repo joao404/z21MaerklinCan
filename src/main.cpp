@@ -63,7 +63,7 @@ void setup()
   // Start the filesystem
   if (!SPIFFS.begin(false))
   {
-    Serial.println("Failed to mount file system");
+    Serial.println(F("Failed to mount file system"));
     while (1)
       ;
   }
@@ -75,7 +75,7 @@ void setup()
   {
     idOfEsp += "0";
   }
-  Serial.printf("ID of chip: ");
+  Serial.print(F("ID of chip: "));
   Serial.println(idOfEsp);
 
   configAutoConnect.ota = AC_OTA_BUILTIN;
@@ -125,7 +125,7 @@ void setup()
       }
       else
       {
-        lokomotiveCs2.print(
+        lokomotiveCs2.print(F(
             "[lokomotive]\n"
             "version\n"
             " .minor=3\n"
@@ -227,7 +227,7 @@ void setup()
             " ..typ=0\n"
             " ..dauer=0\n"
             " ..wert=0\n"
-            "");
+            ""));
         lokomotiveCs2.close();
         WebService::getInstance()->setLokomotiveAvailable(true);
       }
@@ -338,7 +338,7 @@ void setup()
       }
       else
       {
-        Serial.printf("Opened database successfully\n");
+        Serial.println(F("Opened database successfully"));
 
         auto callback = [](void *data, int argc, char **argv, char **azColName) -> int
         {
@@ -364,11 +364,11 @@ void setup()
       lokomotiveCs2 = SPIFFS.open("/config/lokomotive.cs2", FILE_WRITE);
       if (!lokomotiveCs2)
       {
-        Serial.println("ERROR failed to open lokomotive.cs2 for writing");
+        Serial.println(F("ERROR failed to open lokomotive.cs2 for writing"));
       }
       else
       {
-        Serial.println("Openend lokomotive.cs2");
+        Serial.println(F("Openend lokomotive.cs2"));
       }
 
       if (lokomotiveCs2 && (0 == sqliteResult))
@@ -388,6 +388,17 @@ void setup()
     auto searchDccLongFkt = []()
     { centralStation.searchLoco(z60::ProgrammingProtocol::DccLong); };
 
+    auto onConnectFkt = [](IPAddress &ipaddr)
+    {
+      Serial.printf("WiFi connected with %s, IP:%s\n", WiFi.SSID().c_str(), ipaddr.toString().c_str());
+      if (nullptr != udpInterface.get())
+      {
+        udpInterface->activateStationBroadcast();
+      }
+    };
+
+    webService->getAutoConnect().onConnect(onConnectFkt);
+
     webService->begin(configAutoConnect, deleteLocoConfigFkt, defaultLocoListFkt, programmingFkt, readingFkt, searchMotorolaFkt,
                       searchDccShortFkt, searchDccLongFkt, centralStation.getFoundLocoString());
   }
@@ -399,7 +410,7 @@ void setup()
 
   if (!centralStation.setCanObserver(canInterface))
   {
-    Serial.println("ERROR: No can interface defined");
+    Serial.println(F("ERROR: No can interface defined"));
   }
 
   if (nullptr != udpInterface.get())
@@ -409,7 +420,7 @@ void setup()
 
   if (!centralStation.setUdpObserver(udpInterface))
   {
-    Serial.println("ERROR: No udp interface defined");
+    Serial.println(F("ERROR: No udp interface defined"));
   }
 
   centralStation.setLocoManagment(&locoManagment);

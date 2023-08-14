@@ -55,7 +55,7 @@ void UdpInterfaceEsp32::handlePacket(uint8_t client, uint8_t *packet, size_t pac
   {
     uint16_t index = 0;
     uint16_t length = 0;
-    for (size_t left_size = packetLength; left_size > 3;left_size -= length, index += length)
+    for (size_t left_size = packetLength; left_size > 3; left_size -= length, index += length)
     {
       length = (packet[index + 1] << 8) + packet[index];
       if ((left_size < length) || (0 == length))
@@ -71,7 +71,7 @@ void UdpInterfaceEsp32::handlePacket(uint8_t client, uint8_t *packet, size_t pac
 bool UdpInterfaceEsp32::transmit(Udp::Message &message)
 {
   // send data now via new interface using transmit function
-
+  bool result{false};
   uint16_t len = message.data[0] + (message.data[1] << 8);
   if (message.client == 0x00)
   { // Broadcast
@@ -94,32 +94,50 @@ bool UdpInterfaceEsp32::transmit(Udp::Message &message)
     // }
     // Serial.println("B");
     // m_Udp.broadcastTo(message.data, message.data[0], m_port)
-    if (m_Udp.broadcastTo(message.data, len, m_port) == len) //, TCPIP_ADAPTER_IF_AP);
+    
+    if (m_Udp.writeTo(message.data, len, IPAddress(255,255,255,255), m_port, TCPIP_ADAPTER_IF_AP) == len)
     {
-      return true;
+      result |= true;
     }
+    if (stationBroadcastActive)
+    {
+      if (m_Udp.writeTo(message.data, len, IPAddress(255,255,255,255), m_port, TCPIP_ADAPTER_IF_STA) == len)
+      {
+        result |= true;
+      }
+    }
+
+
+    // if (m_Udp.broadcastTo(message.data, len, m_port, TCPIP_ADAPTER_IF_AP) == len)
+    // {
+    //   result |= true;
+    // }
+    // if (stationBroadcastActive)
+    // {
+    //   if (m_Udp.broadcastTo(message.data, len, m_port, TCPIP_ADAPTER_IF_STA) == len)
+    //   {
+    //     result |= true;
+    //   }
+    // }
   }
   else
   {
-    // Serial.print("C ");
-    // Serial.print(mem[client-1].IP);
-    // for(uint16_t i=0;i<len;i++)
-    // {
-    //   Serial.print(" ");
-    //   Serial.print(data[i]);
-    // }
-    // Serial.print("\n");
     if (m_Udp.writeTo(message.data, len, m_mem[message.client - 1].IP, m_port) == len)
     {
-      return true;
+      result = true;
     }
   }
-  return false;
+  return result;
 }
 
 bool UdpInterfaceEsp32::receive(Udp::Message &message)
 {
   return false;
+}
+
+void UdpInterfaceEsp32::activateStationBroadcast()
+{
+  stationBroadcastActive = true;
 }
 
 /**********************************************************************************/

@@ -459,8 +459,8 @@ bool z60::onSystemOverLoad(uint32_t id, uint8_t channel)
   Serial.println(channel);
   uint8_t data[16];
   data[0] = static_cast<uint8_t>(z21Interface::XHeader::LAN_X_BC_TRACK_POWER);
-  data[1] = 0x00; // Power OFF
-  EthSend(0, 0x07, z21Interface::Header::LAN_X_HEADER, data, true, 0);
+  data[1] = 0x08; // Shortcut
+  EthSend(0, 0x07, z21Interface::Header::LAN_X_HEADER, data, true, (static_cast<uint16_t>(BcFlagShort::Z21bcAll) | static_cast<uint16_t>(BcFlagShort::Z21bcNetAll)));
   return true;
 }
 
@@ -649,9 +649,9 @@ bool z60::onLocoSpeed(uint32_t id, uint16_t speed)
       }
       if (m_debug)
       {
-        Serial.print("Id:");
+        Serial.print(F("Id:"));
         Serial.print(finding->adrZ21);
-        Serial.print(" onLS:");
+        Serial.print(F(" onLS:"));
         Serial.println(speed);
       }
 
@@ -692,11 +692,11 @@ bool z60::onLocoFunc(uint32_t id, uint8_t function, uint8_t value)
 {
   if (m_debug)
   {
-    Serial.print("Id:");
+    Serial.print(F("Id:"));
     Serial.print(id, HEX);
-    Serial.print(" onLocoFunc:");
+    Serial.print(F(" onLocoFunc:"));
     Serial.print(function);
-    Serial.print(" value:");
+    Serial.print(F(" value:"));
     Serial.println(value);
   }
 
@@ -766,13 +766,13 @@ bool z60::onWriteConfig(uint32_t id, uint16_t cvAdr, uint8_t value, bool writeSu
 {
   if (m_debug)
   {
-    Serial.print("WC:");
+    Serial.print(F("WC:"));
     Serial.print(id);
-    Serial.print(" cvAdr:");
+    Serial.print(F(" cvAdr:"));
     Serial.print(cvAdr);
-    Serial.print(" value:");
+    Serial.print(F(" value:"));
     Serial.print(value);
-    Serial.print(" :");
+    Serial.print(F(" :"));
     Serial.print(writeSuccessful);
     Serial.println(verified);
   }
@@ -796,11 +796,11 @@ bool z60::onAccSwitch(uint32_t id, uint8_t position, uint8_t current)
 {
   if (m_debug)
   {
-    Serial.print("onAccSwitch:");
+    Serial.print(F("onAccSwitch:"));
     Serial.print(id);
-    Serial.print(" position:");
+    Serial.print(F(" position:"));
     Serial.print(position);
-    Serial.print(" current:");
+    Serial.print(F(" current:"));
     Serial.println(current);
   }
   uint8_t data[16];
@@ -1289,9 +1289,9 @@ void z60::notifyz21InterfaceLocoSpeed(uint16_t Adr, uint8_t speed, uint8_t stepC
           uint16_t locoSpeedTrainBox = static_cast<uint16_t>(static_cast<uint32_t>(locoSpeedAdapted) * 1000 / static_cast<uint32_t>(steps));
           if (m_debug)
           {
-            Serial.print("SetV:");
+            Serial.print(F("SetV:"));
             Serial.print(locoSpeedTrainBox);
-            Serial.print(" D:");
+            Serial.print(F(" D:"));
             Serial.println(speed & 0x80 ? 1 : 2);
           }
           setLocoDir(id, speed & 0x80 ? 1 : 2);

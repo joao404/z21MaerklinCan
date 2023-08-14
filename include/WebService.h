@@ -27,6 +27,8 @@ public:
 
     void setLocoList(std::vector<std::string> *locoList) { m_locoList = locoList; };
 
+    AutoConnect& getAutoConnect() {return m_AutoConnect;};
+
 private:
     static WebService *m_instance;
     WebService();
