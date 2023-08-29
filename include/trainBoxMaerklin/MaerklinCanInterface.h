@@ -20,7 +20,7 @@
 
 #include <Arduino.h>
 #include <Printable.h>
-#include <String>
+#include <string>
 #include <array>
 #include <queue>
 
